@@ -70,20 +70,22 @@ navigate('/dashboard');
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+               className="w-full px-3 py-2 !bg-white !text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:text-black"
+ 
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Mot de passe
             </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
+          <input
+  type="password"
+  required
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  className="w-full px-3 py-2 !bg-white !text-black border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+
+ />
           </div>
     <button
   type="submit"

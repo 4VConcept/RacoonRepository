@@ -56,11 +56,17 @@ router.delete('/:numeroCommande', async (req, res) => {
   try {
    const result = await db.run('DELETE FROM commandes WHERE numeroCommande = ?', [id]);
 
+    // 🔴 2. Supprime aussi dans la table commandeToHiboutik
+    await db.run('DELETE FROM commandeToHiboutik WHERE numCommande = ?', [id]);
+
     if (result.changes === 0) {
       return res.status(404).json({ message: 'Commande non trouvée.' });
     }
-
-    return res.status(200).json({ message: 'Commande supprimée avec succès.' });
+await db.run(
+  `INSERT INTO logs_internes (action, utilisateur) VALUES (?, ?)`,
+  [`🗑️ Suppression de la commande ${id} dans commandes et commandeToHiboutik`, 'système']
+);
+    return res.status(200).json({ message: 'Commande supprimée avec succès dans toutes les tables.' });
   } catch (err) {
     console.error('Erreur suppression commande :', err);
     return res.status(500).json({ message: 'Erreur serveur lors de la suppression.' });
@@ -138,6 +144,9 @@ router.post('/annuler-dernier-numero', async (req, res) => {
 router.post('/reset-system', async (req, res) => {
   try {
     await db.run('DELETE FROM commandes');
+    await db.run('DELETE FROM compteurCommande');
+    await db.run('DELETE FROM commandeToHiboutik');
+    
     res.json({ success: true, message: 'Système réinitialisé' });
   } catch (error) {
     console.error('Erreur reset système :', error);
@@ -165,27 +174,27 @@ console.log('🧾 Pizzas brutes de la commande :', pizzas);
 
 const sales_lines = [];
 
-for (const pizza of pizzas) {
-  // ✅ Extraire correctement le prix total
-      const prixPizza = parseFloat(pizza.prixTotal);
-      sales_lines.push({
-        item_id: parseInt(pizza.pizzaId),
-        quantity: 1,
-        unit_price: prixPizza
-      });
+// for (const pizza of pizzas) {
+//   // ✅ Extraire correctement le prix total
+//       const prixPizza = parseFloat(pizza.prixTotal);
+//       sales_lines.push({
+//         item_id: parseInt(pizza.pizzaId),
+//         quantity: 1,
+//         unit_price: prixPizza
+//       });
 
-  if (pizza.supplements?.length) {
-    for (const s of pizza.supplements) {
-      if (s.ingredient_id) {
-        sales_lines.push({
-          item_id: parseInt(s.ingredient_id),
-          quantity: 1,
-          unit_price: parseFloat(s.prix || 0)
-        });
-      }
-    }
-  }
-}
+//   if (pizza.supplements?.length) {
+//     for (const s of pizza.supplements) {
+//       if (s.ingredient_id) {
+//         sales_lines.push({
+//           item_id: parseInt(s.ingredient_id),
+//           quantity: 1,
+//           unit_price: parseFloat(s.prix || 0)
+//         });
+//       }
+//     }
+//   }
+// }
 
 console.log('📦 Lignes de vente générées pour Hiboutik :', sales_lines);
 // ✅ Reconstruire une vraie date ISO
@@ -215,44 +224,50 @@ const sale_id = creationVente.data.sale_id;
     console.log('🧾 Vente créée, ID :', sale_id);
 
   // Étape 2 : Ajouter les produits
-    for (const pizza of pizzas) {
-      const prixPizza = parseFloat(pizza.prixTotal);
+   const commandeToHoutik = await db.allAsync(`SELECT * FROM commandeToHiboutik WHERE numCommande = ?`, [numeroCommande]);
+
+    if (!commandeToHoutik) {
+      return res.status(404).json({ success: false, message: 'Commande introuvable' });
+    }
+   for (const ligne of commandeToHoutik) {
+  console.log(ligne.product_id, ligne.quantity, ligne.product_price);
+
     
       await axios.post(`https://${HIBOUTIK_ACCOUNT}.hiboutik.com/api/sales/add_product/`, {
         sale_id,
-        product_id: parseInt(pizza.pizzaId),
+        product_id: parseInt(ligne.idProduit),
         size_id: 1,
         quantity:1,
-        product_price: prixPizza
+        product_price: ligne.price
       }, { headers: { 'Content-Type': 'application/json', ...authHeader } });
  }
 
  console.log('📦 Lignes de vente générées pour Hiboutik :', sales_lines);
 
    
-if (!commande.appliqueRemise) {
-await axios.post(`https://${HIBOUTIK_ACCOUNT}.hiboutik.com/api/sales/add_global_discount`, {
-  sale_id,
-  type:2, 
-amount:5
-}, {
-  headers: {
-    'Content-Type': 'application/json',
-    Authorization: 'Basic ' + Buffer.from(`${HIBOUTIK_USERNAME}:${HIBOUTIK_PASSWORD}`).toString('base64')
-  }
-});
-  }
+// if (!commande.appliqueRemise) {
+// await axios.post(`https://${HIBOUTIK_ACCOUNT}.hiboutik.com/api/sales/add_global_discount`, {
+//   sale_id,
+//   type:2, 
+// amount:5
+// }, {
+//   headers: {
+//     'Content-Type': 'application/json',
+//     Authorization: 'Basic ' + Buffer.from(`${HIBOUTIK_USERNAME}:${HIBOUTIK_PASSWORD}`).toString('base64')
+//   }
+// });
+//   }
    
 //  sales_lines,
 //   comment: `Commande ${commande.numeroCommande} - ${commande.nomClient}`,
 //        date: dateFormatee,
 //  payment_mode_id: 1,
 //  
-    // ✅ Mise à jour en base
-    // await db.runAsync(
-    //   `UPDATE commandes SET modePaiement = ? WHERE numeroCommande = ?`,
-    //   ['hiboutik', numeroCommande]
-    // );
+   // ✅ Mise à jour en base
+    await db.runAsync(
+      `UPDATE commandes SET modePaiement = ? WHERE numeroCommande = ?`,
+      ['hiboutik', numeroCommande]
+    );
 
     res.json({
       success: true,
@@ -267,6 +282,19 @@ amount:5
       message: 'Erreur Hiboutik',
       detail: err?.response?.data || err.message
     });
+  }
+});
+
+router.get('/produits/:id', async (req, res) => {
+  const id = req.params.id;
+  try {
+    const produit = await db.getAsync('SELECT description FROM produits WHERE id = ?', [id]);
+    if (!produit) {
+      return res.status(404).json({ message: 'Produit introuvable' });
+    }
+    res.json({ description: produit.description });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', error: err });
   }
 });
 

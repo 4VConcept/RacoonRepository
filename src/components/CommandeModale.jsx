@@ -10,6 +10,17 @@ import baseList from '../data/bases';
 import supplementList from '../data/supplements';
 import optionList  from '../data/options';
 import { useParametres } from '../context/ParametresContext';
+import axios from 'axios';
+
+async function getDescriptionProduit(id) {
+  try {
+    const res = await axios.get(`/api/commandes/produits/${id}`);
+    return res.data.description || '';
+  } catch (err) {
+    console.error(`Erreur récupération description produit ${id}`, err);
+    return '';
+  }
+}
 
 function getDateInGuadeloupe() {
   const now = new Date();
@@ -35,10 +46,13 @@ function getDateInGuadeloupe() {
 
 
 export default function CommandeModale({ isOpen, onClose, pizzaInitiale = null, numeroCommande, selectedTime, commandes, onAddCommande, quotas,
-  delta, listeCreneaux,prioriserHoraire }) {
+  delta, listeCreneaux,prioriserHoraire,setCommandes,commandeDataInitiale = null }) {
 
 
     const parametres = useParametres();
+
+    const isModification = !!commandeDataInitiale;
+
 const [pizzasCommandees, setPizzasCommandees] = useState([]);
 const [pizzaTemp, setPizzaTemp] = useState({});
 const [editIndex, setEditIndex] = useState(null);
@@ -129,7 +143,7 @@ dateLimiteRemise.setHours(hRemise, mRemise, 0, 0);
 
 const appliqueRemise = dateCommande < dateLimiteRemise;
 
-  const handleValidation = () => {
+  const handleValidation = async () => {
 
 
   if (pizzasCommandees.length === 0) {
@@ -148,38 +162,103 @@ const appliqueRemise = dateCommande < dateLimiteRemise;
     return;
   }
 
+  // 🧠 Si on modifie une commande, on récupère son numéro ; sinon on garde le généré
+const numeroCommandeFinal =
+  commandeDataInitiale?.numeroCommande || numeroCommande;
 
-  
-// 📦 Objet final
+console.log('🧾 Numéro de commande retenu :', numeroCommandeFinal);
+
+// 🔁 Supprimer la commande existante si modification
+  if (isModification) {
+    try {
+      await fetch(`http://localhost:3001/api/commandes/${numeroCommandeFinal}`, {
+        method: 'DELETE',
+      });
+      console.log(`🗑️ Commande ${numeroCommandeFinal} supprimée avant recréation`);
+    } catch (err) {
+      console.error("❌ Erreur suppression commande :", err);
+      alert("Erreur lors de la suppression de l'ancienne commande.");
+      return;
+    }
+  }
+  const enrichirPizza = async (pizza) => {
+  const supplements = await Promise.all(
+    (pizza.supplements || []).map(async (s) => {
+      const description = await getDescriptionProduit(s.ingredient_id);
+      return {
+        ...s,
+       ingredient: s.nom || s.ingredient,
+        description, // ✅ NOUVEAU CHAMP AJOUTÉ
+        nom: undefined
+      };
+    })
+  );
+
+  const sousAliments = await Promise.all(
+    (pizza.sousAliments || []).map(async (s) => {
+      const description = await getDescriptionProduit(s.ingredient_id);
+      return {
+        ...s,
+       ingredient: s.nom || s.ingredient,
+        description, // ✅ NOUVEAU CHAMP AJOUTÉ
+        nom: undefined
+      };
+    })
+  );
+
+  return { ...pizza, supplements, sousAliments };
+};
+
+const pizzasNettoyees = await Promise.all(pizzasCommandees.map(enrichirPizza));
+
 const commandeFinale = {
-
-  numeroCommande: numeroCommande,
-  nomClient: commandeData.nomClient, // 👈 ajouter cette ligne
+  numeroCommande: numeroCommandeFinal,
+  nomClient: commandeData.nomClient,
   telephone: commandeData.telephone,
   client: {
     nom: commandeData.nomClient,
     telephone: commandeData.telephone,
   },
-  pizzas: pizzasCommandees,
+  pizzas: pizzasNettoyees,
   total: commandeData.totalFinal,
   date: getDateInGuadeloupe(),
   creneau: creneauFinal,
- modePaiement: commandeData.modePaiement?.trim() || 'non',
-  appliqueRemise: appliqueRemise ? 1 : 0 // ← booléen encodé pour SQLite
-
+  modePaiement: commandeData.modePaiement?.trim() || 'non',
+  appliqueRemise: appliqueRemise ? 1 : 0,
 };
 console.log('comm', commandeFinale);
 
-fetch('http://localhost:3001/api/commandes', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(commandeFinale),
-})
-.then(res => res.json())
-.then(data => { console.log('✅ Commande enregistrée en base');
-  onAddCommande(creneauFinal, commandeFinale)})
-.catch(err => console.error('❌ Erreur sauvegarde commande', err));
+// fetch('http://localhost:3001/api/commandes', {
+//   method: 'POST',
+//   headers: { 'Content-Type': 'application/json' },
+//   body: JSON.stringify(commandeFinale),
+// })
+// .then(res => res.json())
+// .then(data => { console.log('✅ Commande enregistrée en base');
+//   onAddCommande(creneauFinal, commandeFinale)})
+// .catch(err => console.error('❌ Erreur sauvegarde commande', err));
 
+try {
+    await fetch('http://localhost:3001/api/commandes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(commandeFinale),
+    });
+
+    if (isModification) {
+      setCommandes((prev) => {
+        const nouveau = { ...prev };
+        // Supprime de tous les créneaux
+        for (const creneau in nouveau) {
+          nouveau[creneau] = nouveau[creneau].filter(c => c.numeroCommande !== numeroCommande);
+        }
+        // Ajoute dans le bon créneau
+        nouveau[creneauFinal] = [...(nouveau[creneauFinal] || []), commandeFinale];
+        return nouveau;
+      });
+    } else {
+      onAddCommande(creneauFinal, commandeFinale);
+    }
 
 
   setShowSuccess(true);
@@ -189,8 +268,10 @@ fetch('http://localhost:3001/api/commandes', {
     reinitCommande();
   }, 3500);
 
-
-
+} catch (err) {
+    console.error('❌ Erreur sauvegarde commande', err);
+    alert("Erreur lors de l’enregistrement de la commande.");
+  }
 };
 const [resetPizzaForm, setResetPizzaForm] = useState(false);
 const handleAddPizza = (nouvellePizza, resterSurEtape2 = false) => {
@@ -311,22 +392,39 @@ useEffect(() => {
 //   setPizzasCommandees([...pizzasCommandees, pizzaTemp]);
 //   setPizzaTemp({});
 // };
+useEffect(() => {
+  if (isOpen) {
+    const now = new Date();
+    const heure = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    setHeureCommande(heure);
+
+    if (commandeDataInitiale) {
+      setCommandeData({
+        nomClient: commandeDataInitiale.nomClient,
+        telephone: commandeDataInitiale.telephone,
+        creneau: commandeDataInitiale.creneau,
+      });
+      setPizzasCommandees(commandeDataInitiale.pizzas || []);
+      setEtape(3); // Va directement à l’étape 3
+    }
+  }
+}, [isOpen]);
+
 
   console.log('Ajouter les noms aux pizzas :',pizzasCommandees);
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center">
-       <ValidationAnimation visible={showSuccess} onFinish={() => {}} numeroCommande={numeroCommande}/>
+       <ValidationAnimation visible={showSuccess} onFinish={() => {}} numeroCommande={numeroCommande}   texte={isModification ? 'Commande modifiée avec succès 🎯' : 'Commande créée avec succès 🎉'}
+/>
 <div className="bg-white text-gray-900 w-full max-w-4xl h-[90vh] rounded-xl shadow-lg flex flex-col">
 
   {/* HEADER FIXE AVEC STYLE */}
   <div className="modal-header bg-orange-600 text-white px-6 py-4 text-xl font-bold rounded-t-xl shadow-md flex justify-between items-center">
-  <div className="flex items-center gap-2">
-    🍕 Nouvelle commande – 
-    <span className="bg-gray-900 text-white px-3 py-1 rounded-md font-mono text-lg shadow-sm">
-      {numeroCommande}
-    </span>
-  </div>
+ <div className="flex items-center gap-2">
+  🍕 {commandeDataInitiale ? 'Modifier commande' : 'Nouvelle commande'} /
+  <span className="...">N° {commandeDataInitiale?.numeroCommande || numeroCommande}</span>
+</div>
 
   <div className="text-sm text-white font-medium">
     Étape {etape} / 3
@@ -376,7 +474,8 @@ commandes={commandes}
   listeCreneaux={listeCreneaux} // ✅ DOIT être bien passé
   pizzasParQuart={quotas} // ✅ pareil
   delta={delta} // ✅ idem
-  
+    selectedTime={selectedTime}
+    estModification={!!commandeDataInitiale}
   />
           )}
         </div>
@@ -436,8 +535,10 @@ commandes={commandes}
               className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
               disabled={showSuccess}
             >
-              <FiCheckCircle /> Mettre en préparation
-            </button>
+              <FiCheckCircle /> 
+             
+   {commandeDataInitiale ? 'Modifier la commande' : 'Mettre en préparation'}
+  </button>
           )}
         </div>
       </div>
@@ -452,6 +553,7 @@ commandes={commandes}
             handleAddPizza(pizzaTemp, true); // rester sur étape 2
             setPizzaTemp({});
             setShowConfirmationEtape2(false);
+              setEtape(1);     
           }}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >

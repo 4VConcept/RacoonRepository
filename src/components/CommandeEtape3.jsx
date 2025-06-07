@@ -35,6 +35,9 @@ const heureActuelle = new Date().toLocaleTimeString('fr-FR', {
 console.log("listeCreneaux =", listeCreneaux);
 console.log("commandes =", commandes);
 useEffect(() => {
+  console.log('🧪 PRIORISATION ACTIVÉE ?', prioriserHoraire);
+  console.log('🧪 selectedTime reçu :', selectedTime);
+
   const result = getCreneauxDisponibles(
     commandes,
     listeCreneaux,
@@ -44,20 +47,17 @@ useEffect(() => {
     heureActuelle
   );
 
-  if (prioriserHoraire && selectedTime) {
-    const prioritised = [
-      ...result.filter(c => c.time === selectedTime),
-      ...result.filter(c => c.time !== selectedTime)
-    ];
-    setCreneauxDisponibles(prioritised);
-    setCreneauSelectionne(selectedTime); // sélection par défaut
+  if (prioriserHoraire && selectedTime && result.find(c => c.time === selectedTime)) {
+    setCreneauxDisponibles(result);
+    setCreneau(selectedTime);
+    console.log('✅ Créneau priorisé sélectionné :', selectedTime);
   } else {
     setCreneauxDisponibles(result);
-    setCreneauSelectionne(result[0]?.time || '');
+    const defaultTime = result[0]?.time || '';
+    setCreneau(defaultTime);
+    console.log('🕒 Créneau par défaut sélectionné :', defaultTime);
   }
 }, [commandes, listeCreneaux, pizzasCommandees.length, selectedTime, prioriserHoraire]);
-console.log("creneauxDisponibles =", creneauxDisponibles);
-
 
 
 const [creneauSelectionne, setCreneauSelectionne] = useState(creneauxDisponibles[0]?.time || '');
@@ -78,9 +78,12 @@ const isBefore = (heure1, heure2) => {
 };
 const [nomClient, setNomClient] = useState(data.nomClient || '');
   const [telephone, setTelephone] = useState(data.telephone || '');
-const [creneau, setCreneau] = useState(creneauxDisponibles[0]?.time || '');
+const [creneau, setCreneau] = useState('');
 
 
+useEffect(() => {
+  console.log('🧭 Créneau actuellement sélectionné :', creneau);
+}, [creneau]);
 
 
   useEffect(() => {
@@ -132,11 +135,11 @@ const totalFinal = appliqueRemise ? totalSansRemise * 0.95 : totalSansRemise;
   onUpdate({ nomClient, telephone, creneau, totalFinal });
 }, [nomClient, telephone, creneau, pizzasCommandees, heureCommande]);
 
-useEffect(() => {
-  if (creneauxDisponibles.length > 0 && !creneau) {
-    setCreneau(creneauxDisponibles[0].time);
-  }
-}, [creneauxDisponibles]);
+// useEffect(() => {
+//   if (creneauxDisponibles.length > 0 && !creneau) {
+//     setCreneau(creneauxDisponibles[0].time);
+//   }
+// }, [creneauxDisponibles]);
  
   return (
     <div className="space-y-6 p-4 text-gray-800">
@@ -152,7 +155,8 @@ useEffect(() => {
             type="text"
        value={nomClient}
   onChange={(e) => setNomClient(e.target.value)}
-            className="w-full border rounded px-3 py-2"
+         className="w-full border rounded px-3 py-2 bg-white text-black"
+
            />
         </div>
         <div className="w-full md:w-1/2">
@@ -162,7 +166,8 @@ useEffect(() => {
             pattern="[0-9]*"
            value={telephone}
    onChange={(e) => setTelephone(e.target.value)}
-            className="w-full border rounded px-3 py-2"
+            className="w-full border rounded px-3 py-2 bg-white text-black"
+
           />
         </div>
       </div>
@@ -171,7 +176,7 @@ useEffect(() => {
  <select
   value={creneau}
   onChange={(e) => setCreneau(e.target.value)}
-  className="w-full border rounded px-3 py-2"
+  className="w-full border rounded px-3 py-2  bg-white text-black"
 >
   {creneauxDisponibles.map((c) => (
     <option key={c.time} value={c.time}>

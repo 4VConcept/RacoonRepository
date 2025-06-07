@@ -15,12 +15,14 @@ import { useParametres } from '../context/ParametresContext';
 
 
 
-
 // 🧠 Fonction utilitaire locale
 function getPizzaLabel(pizza, cmdId, nomPizza,nomClient) {
-  const supplementText = (pizza.supplements || [])
-    .map(s => `${s.ingredient} (${s.portion})`)
-    .join(', ');
+const supplementText = (pizza.supplements || [])
+  .map(s => `${s.ingredient} (${s.portion})`)
+  .join(', ');
+
+
+
 
   const sousAlimentText = (pizza.sousAliments || [])
     .map(s => `${s.ingredient} (${s.portion})`)
@@ -225,33 +227,10 @@ const pizzaDeltaMax = parametres.delta;
   const hue = paletteHue[index];
   return `hsl(${hue}, 100%, 50%)`;
 };
-  // const getNumeroCommande = () => {
-  //   const today = new Date();
-  //   const yyyymmdd = today.toISOString().split('T')[0].replace(/-/g, '');
-  //   const savedData = JSON.parse(localStorage.getItem('commandeTracker')) || {};
-
-  //   if (savedData.date !== yyyymmdd) {
-  //     savedData.date = yyyymmdd;
-  //     savedData.numero = 1;
-  //   } else {
-  //     savedData.numero += 1;
-  //   }
-
-  //   localStorage.setItem('commandeTracker', JSON.stringify(savedData));
-
-  //   return `${yyyymmdd}-${String(savedData.numero).padStart(3, '0')}`;
-  // };
 
 
-useEffect(() => {
-   if (!showModale) return;
-  fetch('http://localhost:3001/api/commandes/nouveau-numero')
-    .then(res => res.json())
-    .then(data => setNumeroCommande(data.numeroCommande))
-    .catch(err => console.error('Erreur récupération numéro commande', err));
-}, [showModale]);
 
-
+/*ici*/
   const [numeroCommande, setNumeroCommande] = useState('');
 const [prioriserHoraire, setPrioriserHoraire] = useState(false);
 
@@ -263,6 +242,7 @@ const ouvrirModale = (time) => {
   // const numero = getNumeroCommande();
   // setNumeroCommande(numero);
   setSelectedTime(time || null);
+  console.log('heurechoisi', time);
   setPrioriserHoraire(!!time); // true si on a cliqué sur un créneau
   setShowModale(true);
 };
@@ -465,13 +445,24 @@ const handlePayerHiboutik = (pizza) => {
   setModaleType('hiboutik');
 };
 
+const [commandeAModifier, setCommandeAModifier] = useState(null);
+
+useEffect(() => {
+  if (!showModale || commandeAModifier) return; // 👈 ne génère pas de numéro si modification
+
+  fetch('http://localhost:3001/api/commandes/nouveau-numero')
+    .then(res => res.json())
+    .then(data => setNumeroCommande(data.numeroCommande))
+    .catch(err => console.error('Erreur récupération numéro commande', err));
+}, [showModale, commandeAModifier]);
+
   return (
     <DashboardLayout>
-      <div className="flex items-center justify-between mb-6 px-4">
+      {/* <div className="flex items-center justify-between mb-6 px-4">
   <button
     onClick={() => changerJour(-1)}
-    className="bg-gray-700 hover:bg-gray-600 text-white p-3 rounded-full shadow-md transition"
-    aria-label="Jour précédent"
+    className="hidden bg-gray-700 hover:bg-gray-600 text-white p-3 rounded-full shadow-md transition"
+  aria-label="Jour précédent"
   >
     <span className="text-lg">⬅️</span>
   </button>
@@ -482,13 +473,22 @@ const handlePayerHiboutik = (pizza) => {
 
   <button
     onClick={() => changerJour(1)}
-    className="bg-gray-700 hover:bg-gray-600 text-white p-3 rounded-full shadow-md transition"
+    className="hidden bg-gray-700 hover:bg-gray-600 text-white p-3 rounded-full shadow-md transition"
+  
     aria-label="Jour suivant"
   >
     <span className="text-lg">➡️</span>
   </button>
-</div>
+</div> */}
+<div className="flex items-center justify-between mb-6 px-4">
+  <div className="w-12" /> {/* Espace gauche vide */}
 
+  <div className="text-center text-white text-base font-semibold bg-gray-800 px-6 py-2 rounded-full shadow-inner">
+    {formatterDate(dateAffichee)}
+  </div>
+
+  <div className="w-12" /> {/* Espace droite vide */}
+</div>
 
       <div className="text-white w-full px-6">
         <div className="flex justify-end items-center gap-4 mb-4 relative h-10">
@@ -551,7 +551,7 @@ const handlePayerHiboutik = (pizza) => {
     const nomPizza = pizza.nom?.toUpperCase() ?? 'PIZZA';
 
     const key = `${cmd.numeroCommande}-${indexCmd}-${index}`;
-
+console.log('nous',cmd);
     return (
       <div key={key}>
         <Commande
@@ -597,13 +597,17 @@ const handlePayerHiboutik = (pizza) => {
         onClose={() => {
           setShowModale(false);
           setSelectedTime(null);
+            setCommandeAModifier(null); // 🔁 reset si modification
         }}
+      setCommandes={setCommandes}
         commandes={commandes}
   quotas={pizzasParQuart}
   delta={pizzaDeltaMax}
 listeCreneaux={creneaux.map(c => c.time)}
         numeroCommande={numeroCommande}
         selectedTime={selectedTime}
+         pizzaInitiale={null}
+  commandeDataInitiale={commandeAModifier}
        onAddCommande={async (creneau, commande) => {
   try {
    console.log('✅ Objet final envoyé :', JSON.stringify(commande, null, 2));
@@ -644,7 +648,11 @@ listeCreneaux={creneaux.map(c => c.time)}
     onClose={() => setCommandeSelectionnee(null)}
    setCommandes={setCommandes}
     onPayer={(mode) => mettreAJourPaiementLocal(commandeSelectionnee.numeroCommande, mode)}
- 
+ onModifier={(cmd) => {
+    setCommandeSelectionnee(null); // Ferme la modale actuelle
+    setCommandeAModifier(cmd);     // Stocke la commande à modifier
+    setShowModale(true);           // Ouvre la modale de commande
+  }}
   />
 )}
 

@@ -165,7 +165,7 @@ useEffect(() => {
             transition={{ duration: 0.4 }}
             className="mt-10 bg-gray-800 p-8 rounded-xl shadow-xl"
           >
-            <h1 className="text-2xl font-bold mb-6">🛠 Paramètres Administrateur</h1>
+            <h1 className="text-2xl font-bold mb-6">⚙️ Paramètres Administrateur</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -175,7 +175,7 @@ useEffect(() => {
   name="heureDebut"
   value={settings.heureDebut || ''}
   onChange={handleChange}
-  className="w-full px-3 py-2 rounded-md text-black"
+  className="w-full px-3 py-2 rounded-md text-black !bg-white "
 />
               </div>
               <div>
@@ -185,7 +185,7 @@ useEffect(() => {
   name="heureFin"
   value={settings.heureFin || ''}
   onChange={handleChange}
-  className="w-full px-3 py-2 rounded-md text-black"
+  className="w-full px-3 py-2 rounded-md text-black !bg-white "
 />
               </div>
               <div>
@@ -195,7 +195,7 @@ useEffect(() => {
   name="maxPizza"
   value={settings.maxPizza !== undefined ? settings.maxPizza : ''}
   onChange={handleChange}
-  className="w-full px-3 py-2 rounded-md text-black"
+  className="w-full px-3 py-2 rounded-md text-black !bg-white "
 />
               </div>
               <div>
@@ -205,7 +205,7 @@ useEffect(() => {
   name="delta"
   value={settings.delta !== undefined ? settings.delta : ''}
   onChange={handleChange}
-  className="w-full px-3 py-2 rounded-md text-black"
+  className="w-full px-3 py-2 rounded-md text-black !bg-white "
 />
 
               </div>
@@ -216,7 +216,7 @@ useEffect(() => {
   name="heureRemise"
   value={settings.heureRemise || ''}
   onChange={handleChange}
-  className="w-full px-3 py-2 rounded-md text-black"
+  className="w-full px-3 py-2 rounded-md text-black !bg-white "
 />
               </div>
               <div>
@@ -226,7 +226,7 @@ useEffect(() => {
     name="txRemise"
     value={settings.txRemise || ''}
     onChange={handleChange}
-    className="w-full px-3 py-2 rounded-md text-black"
+    className="w-full px-3 py-2 rounded-md text-black !bg-white "
   />
 </div>
 

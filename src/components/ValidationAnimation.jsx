@@ -4,7 +4,7 @@ import { FiCheckCircle } from 'react-icons/fi';
 import confetti from 'canvas-confetti';
 import { useEffect } from 'react';
 
-export default function ValidationAnimation({ visible, onFinish, numeroCommande }) {
+export default function ValidationAnimation({ visible, onFinish, numeroCommande,texte }) {
   useEffect(() => {
     if (visible) {
       const duration = 3 * 1000;
@@ -50,9 +50,11 @@ export default function ValidationAnimation({ visible, onFinish, numeroCommande 
             className="text-center text-white"
           >
             <FiCheckCircle className="text-green-400 text-6xl mx-auto mb-4 animate-bounce" />
-            <h1 className="text-4xl font-bold mb-2">Commande N° {numeroCommande}  ✅</h1>
-            <p className="text-lg text-gray-200">Mise en préparation… Merci !</p>
-          </motion.div>
+         <h1 className="text-4xl font-bold mb-2">Commande N°{numeroCommande} ✅</h1>
+<p className="text-lg text-gray-200">
+  {texte || 'Mise en préparation… Merci !'}
+</p>
+ </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

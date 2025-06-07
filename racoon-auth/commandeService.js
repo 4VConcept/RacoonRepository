@@ -1,5 +1,8 @@
 const db = require('./db.js');
 
+
+
+
 async function enregistrerCommande(commande) {
 
 const {
@@ -56,9 +59,18 @@ console.log('comm',commande);
     );
   });
 
+let totalCommande = 0;
+  for (const pizza of pizzas) {
+  const produit = await db.getAsync(`SELECT prix FROM produits WHERE id = ?`, [pizza.pizzaId]);
 
-    for (const pizza of pizzas) {
-  const prixPizza = parseFloat(pizza.prixTotal);
+  if (!produit) {
+    console.warn(`Produit non trouvé en base pour l’ID ${pizza.pizzaId}`);
+    continue; // ou throw si tu veux bloquer
+  }
+
+const prixBase = parseFloat(produit.prix);
+  totalCommande += prixBase;
+
 
   await db.runAsync(
     `INSERT INTO commandeToHiboutik (idProduit, produit, sizeId, quantity, price, numCommande)
@@ -68,7 +80,7 @@ console.log('comm',commande);
       pizza.nom || 'Pizza',
       1,
       1,
-      prixPizza,
+      prixBase,
       numeroCommande
     ]
   );
@@ -83,7 +95,13 @@ console.log('🧾 Supplément inséré :', pizza.supplements);
       continue;
     }
 const nomSupplement = s.nom || s.ingredient || 'Supplément inconnu';
-
+ let prixSupp = parseFloat(s.prix);
+      if (!prixSupp || isNaN(prixSupp)) {
+        // ⚠️ fallback si prix manquant → on va chercher en base
+        const produitSupp = await db.getAsync(`SELECT prix FROM produits WHERE id = ?`, [s.ingredient_id]);
+        prixSupp = parseFloat(produitSupp?.prix) || 0;
+      }
+totalCommande += prixSupp;
 
     await db.runAsync(
       `INSERT INTO commandeToHiboutik (idProduit, produit, sizeId, quantity, price, numCommande)
@@ -93,27 +111,27 @@ const nomSupplement = s.nom || s.ingredient || 'Supplément inconnu';
         nomSupplement,
         1,
         1,
-        parseFloat(s.prix),
+        prixSupp,
         numeroCommande
       ]
     );
   }
 }
-
 }
-
  // Journalisation
   const detailsPizzas = pizzas.map((p, i) => {
     return `🍕 Pizza ${i + 1} : ${p.nom} - ${p.taille}, base ${p.base}, cuisson ${p.cuisson}`;
   }).join('\n');
 
-  const action = `🆕 Nouvelle commande\n🧑 Client : ${client.nom}\n🕒 Créneau : ${creneau}\n🧾 N° : ${numeroCommande}\n🥐 Quantité : ${pizzas.length} pizza(s)\n${detailsPizzas}\n💶 Total : ${(Number(total) || 0).toFixed(2)} €`;
+  const action = `🆕 Nouvelle commande\n🧑 Client : ${client.nom}\n🕒 Créneau : ${creneau}\n🧾 N° : ${numeroCommande}\n🥐 Quantité : ${pizzas.length} pizza(s)\n${detailsPizzas}\n💶 Total : ${totalCommande.toFixed(2)} €`;
 
   logInterne(action);
   console.log('✅ Journalisation envoyée');
 
   return { id };
 }
+
+
 
 
 

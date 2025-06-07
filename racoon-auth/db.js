@@ -1,118 +1,113 @@
-const mysql = require('mysql2/promise');
+const sqlite3 = require('sqlite3').verbose();
+const db = new sqlite3.Database('./users.db');
+const { promisify } = require('util');
 
-const pool = mysql.createPool({
-host: 'auth-db1057.hstgr.io',
-  user: 'u744567837_racoon',
-  password: '%10^bD0hlc1ZOdyP',
-  database: 'u744567837_racoonpizza',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
+// Promisifier get et run
+db.getAsync = promisify(db.get).bind(db);
+db.runAsync = promisify(db.run).bind(db);
+db.allAsync = promisify(db.all).bind(db);
 
-// Fonction d'initialisation
-async function initDatabase() {
-  const db = await pool.getConnection();
 
-  try {
-    // Création des tables
-    await db.query(`CREATE TABLE IF NOT EXISTS users (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      email VARCHAR(255) UNIQUE,
-      password TEXT
-    )`);
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE,
+    password TEXT
+  )`);
 
-    await db.query(`CREATE TABLE IF NOT EXISTS logs_internes (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      action TEXT NOT NULL,
-      utilisateur TEXT NOT NULL,
-      date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`);
 
-    await db.query(`CREATE TABLE IF NOT EXISTS commandes (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      numeroCommande VARCHAR(50),
-      nomClient TEXT,
-      telephone TEXT,
-      creneau TEXT,
-      pizzas TEXT,
-      total DECIMAL(10,2),
-      date TEXT,
-      modePaiement TEXT,
-      appliqueRemise TINYINT DEFAULT 0
-    )`);
+db.run(`CREATE TABLE IF NOT EXISTS logs_internes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    action TEXT NOT NULL,
+    utilisateur TEXT NOT NULL,
+    date TEXT DEFAULT CURRENT_TIMESTAMP
+  )`);
 
-    await db.query(`CREATE TABLE IF NOT EXISTS commandeToHiboutik (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      idProduit INT NOT NULL,
-      produit TEXT NOT NULL,
-      sizeId INT DEFAULT 1,
-      quantity INT DEFAULT 1,
-      price DECIMAL(10,2) NOT NULL,
-      numCommande VARCHAR(50) NOT NULL
-    )`);
+  db.run(`CREATE TABLE IF NOT EXISTS commandes (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+  numeroCommande TEXT,
+  nomClient TEXT,
+  telephone TEXT,
+  creneau TEXT,
+  pizzas TEXT,
+  total REAL,
+  date TEXT,
+  modePaiement TEXT,
+  appliqueRemise INTEGER DEFAULT 0
+  )`);
 
-    await db.query(`CREATE TABLE IF NOT EXISTS compteurCommande (
-      date VARCHAR(20) PRIMARY KEY,
-      compteur INT DEFAULT 0
-    )`);
+  db.run(`CREATE TABLE IF NOT EXISTS commandeToHiboutik (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  idProduit INTEGER NOT NULL,
+  produit TEXT NOT NULL,
+  sizeId INTEGER DEFAULT 1,
+  quantity INTEGER DEFAULT 1,
+  price REAL NOT NULL,
+  numCommande TEXT NOT NULL
+ )`);
 
-    await db.query(`CREATE TABLE IF NOT EXISTS pizzas_commande (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      commandeId INT,
-      nom TEXT,
-      taille TEXT,
-      base TEXT,
-      cuisson TEXT,
-      FOREIGN KEY (commandeId) REFERENCES commandes(id)
-    )`);
 
-    await db.query(`CREATE TABLE IF NOT EXISTS parametres (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      heureDebut TEXT,
-      heureFin TEXT,
-      maxPizza INT,
-      delta INT,
-      heureRemise TEXT,
-      txRemise INT
-    )`);
+  
+  db.run(`CREATE TABLE IF NOT EXISTS compteurCommande (
+  date TEXT PRIMARY KEY,
+  compteur INTEGER DEFAULT 0
+ )`);
 
-    await db.query(`CREATE TABLE IF NOT EXISTS produits (
-      id INT PRIMARY KEY,
-      nom TEXT,
-      prix DECIMAL(10,2),
-      categorie_id INT,
-      image_url TEXT,
-      description TEXT
-    )`);
+  db.run(`CREATE TABLE IF NOT EXISTS pizzas_commande (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    commandeId INTEGER,
+    nom TEXT,
+    taille TEXT,
+    base TEXT,
+    cuisson TEXT,
+    FOREIGN KEY (commandeId) REFERENCES commandes(id)
+  )`);
+  
+db.run(`CREATE TABLE IF NOT EXISTS parametres (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  heureDebut TEXT,
+  heureFin TEXT,
+  maxPizza INTEGER,
+  delta INTEGER,
+  heureRemise TEXT,
+  txRemise INTEGER
+)`);
 
-    await db.query(`CREATE TABLE IF NOT EXISTS categories (
-      id INT PRIMARY KEY,
-      nom TEXT,
-      parent_id INT,
-      enabled TINYINT,
-      couleur_fond TEXT,
-      couleur_texte TEXT,
-      position INT
-    )`);
+db.run(`CREATE TABLE IF NOT EXISTS produits (
+  id INTEGER PRIMARY KEY,
+  nom TEXT,
+  prix REAL,
+  categorie_id INTEGER,
+  image_url TEXT,
+  description TEXT
+)`);
+db.run(`CREATE TABLE IF NOT EXISTS categories (
+  id INTEGER PRIMARY KEY,
+  nom TEXT,
+  parent_id INTEGER,
+  enabled INTEGER,
+  couleur_fond TEXT,
+  couleur_texte TEXT,
+  position INTEGER
+)`);
 
-    // Insertion valeurs par défaut dans parametres
-    const [rows] = await db.query(`SELECT COUNT(*) AS count FROM parametres`);
-    if (rows[0].count === 0) {
-      await db.query(`
+// Insertion seulement s'il n'existe aucune ligne
+  db.get('SELECT COUNT(*) AS count FROM parametres', (err, row) => {
+    if (err) {
+      console.error('Erreur lors de la vérification de la table parametres', err);
+    } else if (row.count === 0) {
+      db.run(`
         INSERT INTO parametres (heureDebut, heureFin, maxPizza, delta, heureRemise, txRemise)
         VALUES ('18:00', '23:30', 6, 1, '17:00', 5)
-      `);
-      console.log('✅ Valeurs par défaut insérées dans parametres');
+      `, (err) => {
+        if (err) console.error('Erreur lors de l’insertion par défaut dans parametres', err);
+        else console.log('✅ Valeurs par défaut insérées dans parametres');
+      });
     }
-  } catch (err) {
-    console.error('❌ Erreur lors de l\'initialisation MySQL :', err);
-  } finally {
-    db.release();
-  }
-}
+  });
+});
 
-// Appel au démarrage
-initDatabase();
 
-module.exports = pool;
+
+
+module.exports = db;

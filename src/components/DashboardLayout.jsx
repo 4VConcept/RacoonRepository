@@ -49,59 +49,65 @@ const currentPath = location.pathname;
   }}
   className="w-32 mx-auto mb-6"
 /><button
-            onClick={() => setMenuOuvert(!menuOuvert)}
-            className="text-white text-xl mb-6"
-          >
-            ☰
-          </button>
+  onClick={() => setMenuOuvert(!menuOuvert)}
+  className="text-white text-xl mb-6 bg-transparent hover:bg-orange-600 p-2 rounded transition"
+>
+  ☰
+</button>
   <nav className="space-y-4">
             <motion.a
               onClick={() => { navigate('/dashboard'); setMenuOuvert(false); }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-orange-600 transition-all cursor-pointer"
-            >
+            className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all cursor-pointer 
+    ${currentPath === '/dashboard' ? 'bg-orange-600 text-white font-semibold' : 'text-white hover:bg-orange-600 hover:text-white'}`}
+ >
               🏠 {menuOuvert && 'Tableau de bord'}
             </motion.a>
 
             <motion.a onClick={() => { navigate('/suivi-jour'); setMenuOuvert(false); }} whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-orange-600 transition-all cursor-pointer">
-              📅 {menuOuvert && 'Suivi jour'}
+                     className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all cursor-pointer 
+    ${currentPath === '/suivi-jour' ? 'bg-orange-600 text-white font-semibold' : 'text-white hover:bg-orange-600 hover:text-white'}`}
+ >  📅 {menuOuvert && 'Suivi jour'}
             </motion.a>
 
             
 
       
 
-            <motion.a onClick={() => { navigate('/suivi-financier'); setMenuOuvert(false); }} whileHover={{ scale: 1.05 }}
+            {/* <motion.a onClick={() => { navigate('/suivi-financier'); setMenuOuvert(false); }} whileHover={{ scale: 1.05 }}
               className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-orange-600 transition-all cursor-pointer">
               💰 {menuOuvert && 'Suivi Financier'}
-            </motion.a>
+            </motion.a> */}
                   <motion.a onClick={() => { navigate('/diagnostic-api'); setMenuOuvert(false); }} whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-orange-600 transition-all cursor-pointer">
-              🧪 {menuOuvert && 'Diagnostic API'}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all cursor-pointer 
+    ${currentPath === '/diagnostic-api' ? 'bg-orange-600 text-white font-semibold' : 'text-white hover:bg-orange-600 hover:text-white'}`}
+ >🧪 {menuOuvert && 'Diagnostic API'}
             </motion.a>
 
-            <motion.a onClick={() => { navigate('/journalisation'); setMenuOuvert(false); }} whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-orange-600 transition-all cursor-pointer">
-              🧾 {menuOuvert && 'Journalisation'}
-            </motion.a>
+            {/* <motion.a onClick={() => { navigate('/journalisation'); setMenuOuvert(false); }} whileHover={{ scale: 1.05 }}
+                       className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all cursor-pointer 
+    ${currentPath === '/journalisation' ? 'bg-orange-600 text-white font-semibold' : 'text-white hover:bg-orange-600 hover:text-white'}`}
+ > 🧾 {menuOuvert && 'Journalisation'}
+            </motion.a> */}
             <motion.a onClick={() => { navigate('/admin-settings'); setMenuOuvert(false); }} whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-orange-600 transition-all cursor-pointer">
-              ⚙️ {menuOuvert && 'Paramètres'}
+                       className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all cursor-pointer 
+    ${currentPath === '/admin-settings' ? 'bg-orange-600 text-white font-semibold' : 'text-white hover:bg-orange-600 hover:text-white'}`}
+ > ⚙️ {menuOuvert && 'Paramètres'}
             </motion.a>
           </nav>
-                 <motion.button
+            <motion.button
   onClick={() => {
     localStorage.clear();
     navigate('/');
   }}
   whileHover={{ scale: 1.05 }}
   whileTap={{ scale: 0.97 }}
-  className="w-full mt-10 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md font-semibold flex items-center justify-center gap-2 transition-all"
+  className="w-full mt-10 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md font-semibold flex items-center justify-center gap-2 transition-all focus:outline-none focus:ring-2 focus:ring-red-400"
 >
-   🔓 {menuOuvert && 'Se déconnecter'}
+  🔓 {menuOuvert && 'Se déconnecter'}
 </motion.button>
+
         </div>
 
  

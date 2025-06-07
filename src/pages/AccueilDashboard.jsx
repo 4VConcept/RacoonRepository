@@ -19,24 +19,24 @@ export default function AccueilDashboard() {
       path: '/suivi-jour',
       icon: <FiCalendar size={32} />,
     },
-    {
-      title: 'Suivi Financier',
-      color: 'from-green-400 to-green-600',
-      path: '/suivi-financier',
-      icon: <FiDollarSign size={32} />,
-    },
+    // {
+    //   title: 'Suivi Financier',
+    //   color: 'from-green-400 to-green-600',
+    //   path: '/suivi-financier',
+    //   icon: <FiDollarSign size={32} />,
+    // },
     {
       title: 'Diagnostic API',
       color: 'from-blue-400 to-blue-600',
       path: '/diagnostic-api',
       icon: <FiCpu size={32} />,
     },
-    {
-      title: 'Journalisation',
-      color: 'from-gray-400 to-gray-600',
-      path: '/journalisation',
-      icon: <FiActivity size={32} />,
-    },
+    // {
+    //   title: 'Journalisation',
+    //   color: 'from-gray-400 to-gray-600',
+    //   path: '/journalisation',
+    //   icon: <FiActivity size={32} />,
+    // },
     {
       title: 'Paramètres',
       color: 'from-purple-400 to-purple-600',

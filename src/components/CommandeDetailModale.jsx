@@ -172,7 +172,7 @@ const formatDateFrUTC = (isoDate) => {
                 {pizza.option && `, option : ${pizza.option}`}
                 {pizza.cuisson && `, cuisson : ${pizza.cuisson}`}
                {pizza.supplements?.length > 0 && (
-  `, Suppléments : ${pizza.supplements.map(s => `${s.nom} (${s.portion})`).join(', ')}`
+  `, Suppléments : ${pizza.supplements.map(s => `${s.ingredient} (${s.portion})`).join(', ')}`
 )}{pizza.sousAliments?.length > 0 && `, sans : ${pizza.sousAliments.join(', ')}`}
               </li>
             ))}

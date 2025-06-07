@@ -25,7 +25,7 @@ const autoriserModif = differenceEnMinutes >= 15;
 
 
   const idCourt = cmdId.split('-')[1].padStart(3, '0')
-
+console.log('nous',cmdId);
   return (
     <div
       ref={setNodeRef}
@@ -34,7 +34,8 @@ const autoriserModif = differenceEnMinutes >= 15;
       onClick={onClick}
       style={style}
    className="relative rounded p-2 mb-1 text-sm leading-snug shadow cursor-move text-white"
-     >{pizza.modePaiement.trim()!='non' && (
+     >{(pizza?.modePaiement || '').trim().toLowerCase() !== 'non' && (
+
   <div className="absolute top-1 right-1 bg-green-600 text-white px-2 py-0.5 rounded text-xs shadow flex items-center gap-1">
     <span>💰</span>
     <span className="text-[10px] font-semibold">Payée</span>
@@ -67,7 +68,7 @@ const autoriserModif = differenceEnMinutes >= 15;
         <div className="flex flex-wrap gap-1 items-center mt-1">
           {pizza.supplements.map((s, i) => (
             <span key={i} className="bg-green-100 text-green-800 text-sm font-medium px-2 py-0.5 rounded-full">
-              {s.nom} ({s.portion})
+              {s.description.toUpperCase()} ({s.portion})
             </span>
           ))}
         </div>

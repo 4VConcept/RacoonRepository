@@ -154,7 +154,7 @@ if (
     // 👉 ici, on marque la base crème comme supplément explicite
     baseSupplement = {
       ingredient_id: baseCreme.id,
-      nom: 'Base crème',
+      ingredient: 'Base crème',
       prix: baseCreme.prix,
       portion: 'entière'
     };

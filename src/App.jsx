@@ -20,9 +20,9 @@ function App() {
     <Toaster position="top-right" toastOptions={{ duration: 1500 }} />
 
       <Routes>
-        <Route path="/suivi-financier" element={<PrivateRoute>
+        {/* <Route path="/suivi-financier" element={<PrivateRoute>
           <SuiviFinancier />
-          </PrivateRoute>    } />
+          </PrivateRoute>    } /> */}
         <Route path="/diagnostic-api" element={
           <PrivateRoute>
           <DiagnosticAPI />
