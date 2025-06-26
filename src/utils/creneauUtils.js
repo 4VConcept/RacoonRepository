@@ -43,7 +43,7 @@ export function getCreneauxDisponibles(
   pizzasParQuart,
   pizzaDeltaMax,
   heureActuelle,
-  isModification = false,
+  estModification = false,
   creneauInitial = null
 ) {
   console.log('🔍 Appel getCreneauxDisponibles avec :');
@@ -52,7 +52,7 @@ export function getCreneauxDisponibles(
   console.log('🗓️ listeCreneaux :', listeCreneaux);
   console.log('🍕 nombrePizzas :', nombrePizzas);
   console.log('🎯 Quota / Delta :', pizzasParQuart, pizzaDeltaMax);
-  console.log('✏️ Mode modification :', isModification, '| Créneau initial :', creneauInitial);
+  console.log('✏️ Mode modification :', estModification, '| Créneau initial :', creneauInitial);
 
   const resultat = listeCreneaux
     .filter(cr => {
@@ -74,7 +74,7 @@ export function getCreneauxDisponibles(
         return true;
       }
 
-      if (isModification && cr === creneauInitial) {
+      if (estModification && cr === creneauInitial) {
         console.log(`⚠️ ${cr} conservé malgré surcharge (modification en cours)`);
         return true;
       }
