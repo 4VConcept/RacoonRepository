@@ -33,7 +33,8 @@ db.run(`CREATE TABLE IF NOT EXISTS logs_internes (
   total REAL,
   date TEXT,
   modePaiement TEXT,
-  appliqueRemise INTEGER DEFAULT 0
+  appliqueRemise INTEGER DEFAULT 0,
+  commentaire TEXT
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS commandeToHiboutik (
@@ -70,7 +71,9 @@ db.run(`CREATE TABLE IF NOT EXISTS parametres (
   maxPizza INTEGER,
   delta INTEGER,
   heureRemise TEXT,
-  txRemise INTEGER
+  txRemise INTEGER,
+  MaxMoy INTEGER,
+  MaxGrd INTEGER
 )`);
 
 db.run(`CREATE TABLE IF NOT EXISTS produits (
@@ -97,8 +100,8 @@ db.run(`CREATE TABLE IF NOT EXISTS categories (
       console.error('Erreur lors de la vérification de la table parametres', err);
     } else if (row.count === 0) {
       db.run(`
-        INSERT INTO parametres (heureDebut, heureFin, maxPizza, delta, heureRemise, txRemise)
-        VALUES ('18:00', '23:30', 6, 1, '17:00', 5)
+        INSERT INTO parametres (heureDebut, heureFin, maxPizza, delta, heureRemise, txRemise, MaxMoy, MaxGrd)
+        VALUES ('18:00', '23:30', 6, 1, '17:00', 5, 30, 30)
       `, (err) => {
         if (err) console.error('Erreur lors de l’insertion par défaut dans parametres', err);
         else console.log('✅ Valeurs par défaut insérées dans parametres');

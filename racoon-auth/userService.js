@@ -22,6 +22,7 @@ async function validateUser(email, password) {
       }
 
       try {
+         
         const match = await bcrypt.compare(password, row.password);
         resolve(match); // ✅ true si ok, false sinon
       } catch (compareError) {

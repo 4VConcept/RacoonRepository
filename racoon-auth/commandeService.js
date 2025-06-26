@@ -14,7 +14,8 @@ const {
   total = 0,
   date = new Date().toISOString(),
   modePaiement = null,
-  appliqueRemise = 0
+  appliqueRemise = 0,
+  commentaire = ''
 } = commande;
 console.log('📦 INSERT commande :', {
       id,
@@ -26,13 +27,14 @@ console.log('📦 INSERT commande :', {
       total,
       date,
       modePaiement,
-      appliqueRemise
+      appliqueRemise,
+      commentaire
     });
 
 console.log('comm',commande);
  const stmt = `
-  INSERT INTO commandes (numeroCommande, nomClient, telephone, creneau, pizzas, total, date, modePaiement,appliqueRemise)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  INSERT INTO commandes (numeroCommande, nomClient, telephone, creneau, pizzas, total, date, modePaiement,appliqueRemise, commentaire)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `;
 
 
@@ -50,7 +52,8 @@ console.log('comm',commande);
         total,
         date,
         modePaiement,
-        appliqueRemise
+        appliqueRemise, 
+        commentaire
       ],
       function (err) {
        if (err) reject(err);

@@ -31,12 +31,12 @@ export default function AccueilDashboard() {
       path: '/diagnostic-api',
       icon: <FiCpu size={32} />,
     },
-    // {
-    //   title: 'Journalisation',
-    //   color: 'from-gray-400 to-gray-600',
-    //   path: '/journalisation',
-    //   icon: <FiActivity size={32} />,
-    // },
+    {
+      title: 'Journalisation',
+      color: 'from-gray-400 to-gray-600',
+      path: '/journalisation',
+      icon: <FiActivity size={32} />,
+    },
     {
       title: 'Paramètres',
       color: 'from-purple-400 to-purple-600',

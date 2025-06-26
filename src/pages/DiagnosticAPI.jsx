@@ -83,18 +83,18 @@ export default function DiagnosticAPI() {
   };
 
   const synchroniserTous = async () => {
-    setSyncStatus('syncing');
+   /* setSyncStatus('syncing');
     setSyncMessage('');
-    simulateProgress(setSyncProgress);
+    simulateProgress(setSyncProgress);*/
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/diagnostic/sync-all`);
+   /*   const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/diagnostic/sync-all`);
       const result = await response.json();
 
       if (!result.success) throw new Error(result.message);
       setSyncStatus('success');
       setSyncMessage(`✅ ${result.total.categories} catégories et ${result.total.produits} produits synchronisés`);
-      await chargerEtatLocal();
+      await chargerEtatLocal();*/
     } catch (error) {
       setSyncStatus('failure');
       setSyncMessage(`❌ Erreur : ${error.message}`);

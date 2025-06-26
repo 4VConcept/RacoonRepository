@@ -65,8 +65,7 @@ const client = action.match(/Client ?: (.+)/)?.[1] ?? 'Anonyme';
     action.match(/Nouveau créneau ?: ([\d:]+)/)?.[1] ??
     action.match(/-> ([\d:]+)/)?.[1] ??
     null;
-    console.log(action); 
-    console.log(numero); 
+    const estSuppression = /suppression/i.test(action);
     return {
       numero,
       client,
@@ -75,6 +74,8 @@ const client = action.match(/Client ?: (.+)/)?.[1] ?? 'Anonyme';
       dateCommande,
       heureCommande,
        nouveauCreneau,
+        estSuppression,
+        dateBrute: date,
     };
   };
 const formatDateFrUTC = (isoDate) => {
@@ -135,50 +136,80 @@ const formatDateFrUTC = (isoDate) => {
                 client,
                 total,
                 dateLog,
-                
+                estSuppression,
                 heureCommande,
                 nouveauCreneau
               } = extraireInfosLog(log);
+function formatDateGuadeloupe(dateUTC) {
+  const date = new Date(dateUTC);
+  const formatterDate = new Intl.DateTimeFormat('fr-FR', {
+    timeZone: 'America/Guadeloupe',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
 
-              return (
-                <motion.li
-                  key={index}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.02 }}
-                  className="flex justify-between items-center bg-gray-800 rounded-lg px-4 py-4 shadow border border-gray-700 hover:border-orange-500 transition"
-                >
-                  <div className="flex-1 pr-4">
-{nouveauCreneau ? (
-  <>
-    <p className="text-orange-400 font-bold text-base mb-1">
-      🔄 Changement de créneau pour la commande <span className="underline">{numero}</span>
-    </p>
-    <p className="text-sm text-gray-300">🕒 Nouveau créneau : {nouveauCreneau}</p>
+  const formatterTime = new Intl.DateTimeFormat('fr-FR', {
+    timeZone: 'America/Guadeloupe',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+
+  const datePart = formatterDate.format(date);
+  const timePart = formatterTime.format(date);
+
+  return `${datePart} à ${timePart}`;
+}
+
+const infos = extraireInfosLog(log);
+console.log(infos.dateCommande);
+            return (
+  <motion.li
+    key={index}
+    initial={{ opacity: 0, x: -10 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ delay: index * 0.02 }}
+    className="bg-gray-800 rounded-lg px-4 py-4 shadow border border-gray-700 hover:border-orange-500 transition"
+  >
+    <div className="flex justify-between w-full items-center">
+     {infos.estSuppression ? (
     
-    <p className="text-sm text-gray-300">🧾 N° de commande : {numero}</p>
-  </>
-) : (
-  <>
+  <div className="text-red-400">
+    <p className="font-bold text-base mb-1">🗑️ Suppression commande</p>
+    <p className="text-sm">🧾 N° : {infos.numero}</p>
+    <p className="text-sm">👤 Client : {infos.client}</p>    
+  <p className="text-sm">📅 Date : {infos.dateCommande}</p>
+
+  </div>
+) : infos.nouveauCreneau ? (
+  <div>
     <p className="text-orange-400 font-bold text-base mb-1">
-      🆕 Nouvelle commande n° <span className="underline">{numero}</span> 🕒 à {heureCommande}
+      🕒 Commande <span className="underline">n° {infos.numero}</span> déplacée à {infos.nouveauCreneau} 
     </p>
-    <p className="text-sm text-gray-300">👤 Client : {client}</p>
-    <p className="text-sm text-gray-300">💶 Total : {total} €</p>
-  </>
+    <p className="text-sm text-gray-300">👤 Client : {infos.client}</p>
+  </div>
+) : (
+  <div>
+    <p className="text-orange-400 font-bold text-base mb-1">
+      🆕 Nouvelle commande n° <span className="underline">{infos.numero}</span> 🕒 à {infos.dateLog}
+    </p>
+    <p className="text-sm text-gray-300">👤 Client : {infos.client}</p>
+    <p className="text-sm text-gray-300">💶 Total : {infos.total} €</p>
+  </div>
 )}
 
-{/* <p className="text-sm text-gray-300">📅 Log : {dateLog}</p> */}
-               
-                  </div>
-                  <button
-                    onClick={() => setLogDetail(log)}
-                    className="flex-shrink-0 bg-orange-600 text-white px-3 py-1 rounded hover:bg-orange-700 transition"
-                  >
-                    <FiEye />
-                  </button>
-                </motion.li>
-              );
+      <button
+        onClick={() => setLogDetail(log)}
+        className="flex-shrink-0 bg-orange-600 text-white px-3 py-1 rounded hover:bg-orange-700 transition"
+      >
+        <FiEye />
+      </button>
+    </div>
+  </motion.li>
+);
+
             })}
           </ul>
         )}
@@ -186,7 +217,9 @@ const formatDateFrUTC = (isoDate) => {
       
         {/* MODALE DE DÉTAIL */}
 <AnimatePresence>
+  
   {logDetail && (
+
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -216,10 +249,10 @@ const formatDateFrUTC = (isoDate) => {
         {/* Corps de la modale */}
         <div className="p-6 space-y-4 text-sm">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+            {/* <div>
               <p className="text-gray-500 font-semibold mb-1">📅 Date du log :</p>
               <p>{new Date(logDetail.date).toLocaleString()}</p>
-            </div>
+            </div> */}
             <div>
               <p className="text-gray-500 font-semibold mb-1">👤 Utilisateur :</p>
               <p>{logDetail.utilisateur}</p>

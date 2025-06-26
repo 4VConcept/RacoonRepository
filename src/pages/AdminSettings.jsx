@@ -22,7 +22,10 @@ const { refreshParametres } = useParametres();
     maxPizza: '',
     delta: '',
     heureRemise: '',
-    txRemise: ''
+    txRemise: '',
+    MaxMoy: '',
+MaxGrd: ''
+
   });
 
   const handleUnlock = async () => {
@@ -51,7 +54,9 @@ if (paramData.success && paramData.data) {
     maxPizza: paramData.data.maxPizza ?? '',
     delta: paramData.data.delta ?? '',
     heureRemise: paramData.data.heureRemise || '',
-    txRemise: paramData.data.txRemise || ''
+    txRemise: paramData.data.txRemise || '',
+    MaxMoy: paramData.data.MaxMoy || '',
+    MaxGrd: paramData.data.MaxGrd || ''
   });
 }
 
@@ -72,6 +77,8 @@ if (paramData.success && paramData.data) {
   };
 
   const handleChange = (e) => {
+    console.log('🧪 handleChange', e.target.name, e.target.value);
+  
     setSettings({ ...settings, [e.target.name]: e.target.value });
   };
 
@@ -96,7 +103,7 @@ if (paramData.success && paramData.data) {
   }
   };
 useEffect(() => {
-  if (isUnlocked) {
+
     fetch(`${import.meta.env.VITE_API_BASE}/api/parametres`)
       .then(res => res.json())
       .then(data => {
@@ -107,58 +114,22 @@ useEffect(() => {
             maxPizza: data.data.maxPizza ?? '',
             delta: data.data.delta ?? '',
             heureRemise: data.data.heureRemise || '',
-            txRemise: data.data.txRemise || ''
+            txRemise: data.data.txRemise || '',
+              MaxMoy: data.data.MaxMoy || '',
+    MaxGrd: data.data.MaxGrd || ''
           });
         }
       });
-  }
+  
 }, [isUnlocked]);
+console.log('🎯 Settings actuels :', settings);
 
   return (
     <DashboardLayout>
       <div className="max-w-3xl mx-auto text-white">
-        <AnimatePresence>
-          {!isUnlocked && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-            >
-              <div className="bg-gray-800 p-8 rounded-2xl shadow-2xl w-96 text-center">
-                <h2 className="text-xl font-bold mb-4">🔐 Accès Administrateur</h2>
-                <input
-                  type="password"
-                  value={codeInput}
-                  onChange={(e) => setCodeInput(e.target.value)}
-                  className="w-full px-4 py-2 rounded-md mb-4 text-black"
-                  placeholder="Entrez le code"
-                />
-                {error && (
-                  <p className="text-red-600 text-sm mb-4">
-                    Code incorrect. Veuillez réessayer.
-                  </p>
-                )}
-                <div className="flex gap-4">
-                  <button
-                    onClick={handleUnlock}
-                    className="w-full py-2 bg-orange-600 hover:bg-orange-700 rounded-md font-semibold"
-                  >
-                    Déverrouiller
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="bg-gray-300 hover:bg-gray-400 text-black font-semibold px-4 py-2 rounded"
-                  >
-                    Annuler
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      
 
-        {isUnlocked && (
+    
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -229,7 +200,26 @@ useEffect(() => {
     className="w-full px-3 py-2 rounded-md text-black !bg-white "
   />
 </div>
-
+  <div>
+                <label className="block text-sm mb-1">Nombre pizzas moyenne par service</label>
+              <input
+  type="number"
+  name="MaxMoy"
+  value={settings.MaxMoy || ''}
+  onChange={handleChange}
+  className="w-full px-3 py-2 rounded-md text-black !bg-white "
+/>
+              </div>
+              <div>
+  <label className="block text-sm mb-1">Nombre pizzas grande par service</label>
+  <input
+    type="number"
+    name="MaxGrd"
+    value={settings.MaxGrd || ''}
+    onChange={handleChange}
+    className="w-full px-3 py-2 rounded-md text-black !bg-white "
+  />
+</div>
               <div className="col-span-2 mt-6 flex flex-col gap-4">
   <button
     onClick={handleSave}
@@ -279,7 +269,7 @@ useEffect(() => {
               
             </div>
           </motion.div>
-        )}
+  
       </div>
     </DashboardLayout>
   );

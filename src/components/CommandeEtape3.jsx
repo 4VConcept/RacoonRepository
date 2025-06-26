@@ -66,7 +66,8 @@ const [creneauSelectionne, setCreneauSelectionne] = useState(creneauxDisponibles
   const [commandeData, setCommandeData] = useState({
   nomClient: '',
   telephone: '',
- creneau: '', // nouveau champ
+ creneau: '',
+ commentaire: '',
  });
 
 
@@ -79,6 +80,7 @@ const isBefore = (heure1, heure2) => {
 const [nomClient, setNomClient] = useState(data.nomClient || '');
   const [telephone, setTelephone] = useState(data.telephone || '');
 const [creneau, setCreneau] = useState('');
+  const [commentaire, setCommentaire] = useState(data.commentaire || '');
 
 
 useEffect(() => {
@@ -129,11 +131,11 @@ const totalFinal = appliqueRemise ? totalSansRemise * 0.95 : totalSansRemise;
     nomClient,
     telephone,
     creneau,
-    totalFinal
+    totalFinal, commentaire
   });
 
-  onUpdate({ nomClient, telephone, creneau, totalFinal });
-}, [nomClient, telephone, creneau, pizzasCommandees, heureCommande]);
+  onUpdate({ nomClient, telephone, creneau, totalFinal,commentaire: commentaire.trim() || '' });
+}, [nomClient, telephone, creneau, pizzasCommandees, heureCommande, commentaire]);
 
 // useEffect(() => {
 //   if (creneauxDisponibles.length > 0 && !creneau) {
@@ -152,22 +154,26 @@ const totalFinal = appliqueRemise ? totalSansRemise * 0.95 : totalSansRemise;
         <div className="w-full md:w-1/2">
           <label className="block text-sm font-semibold mb-1">👤 Nom du client</label>
           <input
+            required
             type="text"
        value={nomClient}
   onChange={(e) => setNomClient(e.target.value)}
-         className="w-full border rounded px-3 py-2 bg-white text-black"
-
+      className={`w-full border-2 rounded px-3 py-2 text-black transition duration-300
+      ${!nomClient ? 'bg-orange-100 border-orange-400' : 'bg-white border-gray-300'}`}
+    placeholder="Entrez le nom du client"
            />
         </div>
         <div className="w-full md:w-1/2">
           <label className="block text-sm font-semibold mb-1">📞 Téléphone</label>
           <input
+            required
             type="tel"
             pattern="[0-9]*"
            value={telephone}
    onChange={(e) => setTelephone(e.target.value)}
-            className="w-full border rounded px-3 py-2 bg-white text-black"
-
+            className={`w-full border-2 rounded px-3 py-2 text-black transition duration-300
+      ${!telephone ? 'bg-orange-100 border-orange-400' : 'bg-white border-gray-300'}`}
+    placeholder="Entrez un numéro valide"
           />
         </div>
       </div>
@@ -218,27 +224,32 @@ const totalFinal = appliqueRemise ? totalSansRemise * 0.95 : totalSansRemise;
 
     return (
       <tr key={index} className="border-t hover:bg-gray-50 align-top">
-        <td className="px-4 py-2">
-          <div className="flex gap-2">
-            <button onClick={() => onEdit(index)} className="p-1 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded">
-              <FiEdit2 />
-            </button>
-            <button
-              onClick={() => {
-                if (pizzasCommandees.length <= 1) {
-                  alert("❌ La commande doit contenir au moins une pizza.");
-                  return;
-                }
-                if (confirm("Êtes-vous sûr de vouloir supprimer cette pizza ?")) {
-                  onDelete(index);
-                }
-              }}
-              className="p-1 bg-red-100 hover:bg-red-200 text-red-600 rounded"
-            >
-              <FiTrash2 />
-            </button>
-          </div>
-        </td>
+  <td className="px-4 py-2">
+    <div className="flex gap-3">
+      <button
+        onClick={() => onEdit(index)}
+        className="p-3 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded text-xl"
+        aria-label="Modifier"
+      >
+        <FiEdit2 />
+      </button>
+      <button
+        onClick={() => {
+          if (pizzasCommandees.length <= 1) {
+            alert("❌ La commande doit contenir au moins une pizza.");
+            return;
+          }
+          if (confirm("Êtes-vous sûr de vouloir supprimer cette pizza ?")) {
+            onDelete(index);
+          }
+        }}
+        className="p-3 bg-red-100 hover:bg-red-200 text-red-600 rounded text-xl"
+        aria-label="Supprimer"
+      >
+        <FiTrash2 />
+      </button>
+    </div>
+  </td>
 
         <td className="px-4 py-2 font-medium">{nomPizza}</td>
 
@@ -246,9 +257,18 @@ const totalFinal = appliqueRemise ? totalSansRemise * 0.95 : totalSansRemise;
           <div><strong>Taille :</strong> {pizza.taille}</div>
           <div><strong>Base :</strong> {pizza.base}</div>
 
-          {pizza.option && (
-            <div><strong>Option :</strong> {pizza.option}</div>
-          )}
+   {Array.isArray(pizza.options) && pizza.options.length > 0 && (
+  <div className="flex gap-1 flex-wrap">
+    <strong className="mr-1">Options :</strong>
+    {pizza.options.map((opt, i) => (
+      <span key={i}>
+        {opt }  {i < pizza.options.length - 1 && ','}
+      </span>
+    ))}
+  </div>
+)}
+
+
 
           {pizza.cuisson && (
             <div><strong>Cuisson :</strong> {pizza.cuisson}</div>
@@ -268,7 +288,7 @@ const totalFinal = appliqueRemise ? totalSansRemise * 0.95 : totalSansRemise;
 
           {pizza.sousAliments?.length > 0 && (
             <div>
-              <strong>Sous-aliments :</strong> {pizza.sousAliments.map(s => `${s.ingredient} (${s.portion})`).join(', ')}
+              <strong>Sans aliments :</strong> {pizza.sousAliments.map(s => `${s.ingredient} (${s.portion})`).join(', ')}
             </div>
           )}
         </td>
@@ -288,6 +308,21 @@ const totalFinal = appliqueRemise ? totalSansRemise * 0.95 : totalSansRemise;
     {appliqueRemise && <span className="text-sm text-red-600 ml-2">(Remise 5%)</span>}
   </div>
 </div>
+<div className="mt-6">
+  <label htmlFor="commentaire" className="block text-sm font-semibold text-gray-700 mb-1">
+    Commentaire spécial (facultatif)
+  </label>
+  <textarea
+  id="commentaire"
+  value={commentaire}
+  onChange={(e) => setCommentaire(e.target.value)}
+  rows={3}
+  placeholder="Ex : Ne pas couper la pizza, sans fromage, allergie aux fruits de mer..."
+  className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+/>
+
+</div>
+
     </div>
   );
 }

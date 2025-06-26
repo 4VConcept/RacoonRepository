@@ -8,7 +8,7 @@ const authRoutes = require('./routes/auth');
 
 const diagnosticRoute = require('./routes/diagnostic');
 
-const verifierCodeRoute = require('./routes/verifierCode');
+//const verifierCodeRoute = require('./routes/verifierCode');
 const commandesRoute = require('./routes/commandes');
 const parametresRoute = require('./routes/parametres');
 
@@ -25,7 +25,7 @@ app.use(cors({
 app.use(express.json());
 app.use('/api', authRoutes);
 app.use('/api/diagnostic', diagnosticRoute);
-app.use('/api/verifier-code-admin', verifierCodeRoute);
+//app.use('/api/verifier-code-admin', verifierCodeRoute);
 app.use('/api/commandes', commandesRoute);
 app.use('/api/parametres', parametresRoute);
 app.use('/api/logs', logRoutes);

@@ -1,8 +1,8 @@
 const cuissonList = [
   { id: 0, nom: '' }, // Valeur vide pour "aucun"
-    { id: 1, nom: "Bien cuit" },
-  { id: 2, nom: "Pas brûlé" },
-  { id: 3, nom: "Al dente" }
+    { id: 1, nom: "Normale" },
+  { id: 2, nom: "Légère" },
+  { id: 3, nom: "Bien cuite" }
 ];
 
 export default cuissonList;

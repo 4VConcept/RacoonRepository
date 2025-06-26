@@ -15,14 +15,14 @@ router.get('/', async (req, res) => {
 
 // POST : Mettre à jour les paramètres
 router.post('/', async (req, res) => {
-  const { heureDebut, heureFin, maxPizza, delta, heureRemise, txRemise } = req.body;
+  const { heureDebut, heureFin, maxPizza, delta, heureRemise, txRemise, MaxMoy, MaxGrd } = req.body;
 
   try {
     await db.runAsync(`
       UPDATE parametres SET
-        heureDebut = ?, heureFin = ?, maxPizza = ?, delta = ?, heureRemise = ?, txRemise = ?
+        heureDebut = ?, heureFin = ?, maxPizza = ?, delta = ?, heureRemise = ?, txRemise = ?, MaxMoy = ?, MaxGrd = ?
       WHERE id = 1
-    `, [heureDebut, heureFin, maxPizza, delta, heureRemise, txRemise]);
+    `, [heureDebut, heureFin, maxPizza, delta, heureRemise, txRemise, MaxMoy, MaxGrd]);
 
     res.json({ success: true });
   } catch (err) {

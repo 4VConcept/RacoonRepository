@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+/*new */ import { useEffect, useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import TopHeader from '../components/TopHeader';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
-import { motion } from 'framer-motion';
+import { maxGeneratorDuration, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import CommandeModale from '../components/CommandeModale';
 import { FiShoppingCart } from 'react-icons/fi';
@@ -11,6 +11,13 @@ import pizzaList from '../data/pizzas';
 import CommandeDetailModale from '../components/CommandeDetailModale';
 import Commande from '../components/Commande';
 import { MdLocalShipping } from 'react-icons/md';
+import {
+  PointerSensor,
+  useSensor,
+  useSensors,
+  TouchSensor
+} from '@dnd-kit/core';
+
 import { useParametres } from '../context/ParametresContext';
 
 
@@ -38,12 +45,37 @@ const idCourt = cmdId.toString().slice(-3); // les 3 derniers chiffres de la com
     (sousAlimentText ? `\n- Sans: ${sousAlimentText}` : '');
 }
 
+
 export default function SuiviJour() {
-const { parametres, refreshParametres } = useParametres();
+const { parametres } = useParametres();
+ const [commandeSelectionnee, setCommandeSelectionnee] = useState(null);
+  const [commandes, setCommandes] = useState({});
+ 
 
+  const [creneaux, setCreneaux] = useState([]);
+  const [showModale, setShowModale] = useState(false);
+  const [numeroCommande, setNumeroCommande] = useState('');
+  const [modaleType, setModaleType] = useState(null);
+  const [commandeAModifier, setCommandeAModifier] = useState(null);
+  const [totalPizzasMoy, setTotalPizzasMoy] = useState(0);
+  const [totalPizzasGrd, setTotalPizzasGrd] = useState(0);
+  // ✅ Sécuriser les paramètres même si null au premier render
+  const heureDebut = parametres?.heureDebut || '18:00';
+  const heureFin = parametres?.heureFin || '22:00';
+  const pizzasParQuart = parametres?.maxPizza || 6;
+  const pizzaDeltaMax = parametres?.delta || 3;
+  const pizzaMaxMoy = parametres?.MaxMoy || 30;
+  const pizzaMaxGrd = parametres?.MaxGrd || 30;
+const sensors = useSensors(
+  useSensor(PointerSensor),
+  useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 150, // petit délai pour éviter les scroll involontaires
+      tolerance: 5,
+    },
+  })
+);
 
-
-//f (!parametres) return <p>Chargement des paramètres...</p>;
 const mettreAJourPaiementLocal = (numeroCommande, modePaiement) => {
   setCommandes((prev) => {
     const nouveau = { ...prev };
@@ -58,11 +90,7 @@ const mettreAJourPaiementLocal = (numeroCommande, modePaiement) => {
   });
 };
 
-const [dateAffichee, setDateAffichee] = useState(() => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return today;
-});
+
 const changerJour = (delta) => {
   setDateAffichee(prev => {
     const nouvelleDate = new Date(prev);
@@ -79,6 +107,14 @@ const formatterDate = (date) => {
     year: 'numeric',
   });
 };
+
+ const [dateAffichee, setDateAffichee] = useState(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
+
+  
 useEffect(() => {
   const isoDate = dateAffichee.toISOString().split('T')[0]; // yyyy-mm-dd
   fetch(`${import.meta.env.VITE_API_BASE}/api/commandes?date=${isoDate}`)
@@ -94,13 +130,15 @@ useEffect(() => {
   const { setNodeRef, isOver } = useDroppable({ id });
   const [highlight, setHighlight] = useState(false);
 
-  useEffect(() => {
-    if (isOver && !isOverLimit) {
-      setHighlight(true);
-      const timeout = setTimeout(() => setHighlight(false), 1000);
-      return () => clearTimeout(timeout);
-    }
-  }, [isOver, isOverLimit]);
+ 
+
+useEffect(() => {
+  if (isOver && !isOverLimit) {
+    setHighlight(true);
+  } else {
+    setHighlight(false);
+  }
+}, [isOver, isOverLimit]);
 
   const handleDrop = async (event) => {
     const { active } = event;
@@ -149,7 +187,6 @@ useEffect(() => {
   );
 }
 
-const [commandeSelectionnee, setCommandeSelectionnee] = useState(null);
 
 const ajouterCommande = (creneauId, commande) => {
 
@@ -167,11 +204,8 @@ const ajouterCommande = (creneauId, commande) => {
 
   const [showPlusOne, setShowPlusOne] = useState(false);
   const [totalPizzas, setTotalPizzas] = useState(0);
-  const [creneaux, setCreneaux] = useState([]);
-  const [showModale, setShowModale] = useState(false);
-  const [selectedTime, setSelectedTime] = useState(null);
-  const [commandes, setCommandes] = useState({});
-
+ const [selectedTime, setSelectedTime] = useState(null);
+ 
   useEffect(() => {
   const fetchCommandes = async () => {
     try {
@@ -201,37 +235,43 @@ const ajouterCommande = (creneauId, commande) => {
 }, [dateAffichee]); // ← attention à dépendre de la date affichée si tu as les boutons jour précédent / suivant
 
 
-  // const heureDebut = '18:00';
-  // const heureFin = '22:00';
-  // const pizzasParQuart = 6;
-  // const pizzaDeltaMax = 3;
-
-if (!parametres) {
-  return <p className="text-white p-4">Chargement des paramètres...</p>;
-}
-const heureDebut = parametres.heureDebut;
-const heureFin = parametres.heureFin;
-const pizzasParQuart = parametres.maxPizza;
-const pizzaDeltaMax = parametres.delta;
 
 
 
 
-  const genererCouleurDepuisTexte = (texte) => {
-  const paletteHue = [0, 30, 60, 120, 180, 210, 270, 330]; // 8 teintes bien distinctes
-  let hash = 0;
-  for (let i = 0; i < texte.length; i++) {
-    hash = texte.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % paletteHue.length;
-  const hue = paletteHue[index];
-  return `hsl(${hue}, 100%, 50%)`;
+const couleursPastel = [
+  'hsl(0, 100%, 85%)',    // 1
+  'hsl(30, 100%, 85%)',   // 2
+  'hsl(50, 100%, 85%)',   // 3
+  'hsl(90, 70%, 85%)',    // ...
+  'hsl(150, 60%, 85%)',
+  'hsl(180, 60%, 85%)',
+  'hsl(210, 80%, 85%)',
+  'hsl(240, 100%, 85%)',
+  'hsl(270, 100%, 88%)',
+  'hsl(300, 100%, 88%)',  // 10
+  'hsl(330, 100%, 88%)',
+  'hsl(20, 80%, 86%)',
+  'hsl(60, 80%, 86%)',
+  'hsl(110, 50%, 85%)',
+  'hsl(160, 50%, 85%)',
+  'hsl(200, 60%, 85%)',
+  'hsl(230, 70%, 88%)',
+  'hsl(260, 70%, 88%)',
+  'hsl(290, 70%, 88%)',
+  'hsl(10, 70%, 88%)'     // 20
+];
+
+const genererCouleurDepuisTexte = (texte) => {
+  const numero = parseInt(texte.replace(/\D/g, ''), 10); // extrait le numéro
+  const index = (numero - 1) % couleursPastel.length;
+  return couleursPastel[index];
 };
 
 
 
+
 /*ici*/
-  const [numeroCommande, setNumeroCommande] = useState('');
 const [prioriserHoraire, setPrioriserHoraire] = useState(false);
 
   // useEffect(() => {
@@ -246,7 +286,6 @@ const ouvrirModale = (time) => {
   setPrioriserHoraire(!!time); // true si on a cliqué sur un créneau
   setShowModale(true);
 };
-const [modaleType, setModaleType] = useState(null); // "especes" ou "hiboutik"
 
 
 // LISTE CRÉNEAUX GÉNÉRÉE ICI
@@ -277,17 +316,29 @@ const [modaleType, setModaleType] = useState(null); // "especes" ou "hiboutik"
  setCreneaux(generateCreneaux());
 }, [heureDebut, heureFin]);
 
-  useEffect(() => {
- const newTotal = Object.values(commandes)
-  .flat()
-  .reduce((total, cmd) => total + (cmd.pizzas?.length || 0), 0);
+//   useEffect(() => {
+//  const newTotal = Object.values(commandes)
+//   .flat()
+//   .reduce((total, cmd) => total + (cmd.pizzas?.length || 0), 0);
 
-    if (newTotal > totalPizzas) {
-      setShowPlusOne(true);
-      setTimeout(() => setShowPlusOne(false), 1000);
-    }
-    setTotalPizzas(newTotal);
-  }, [commandes]);
+//     if (newTotal > totalPizzas) {
+//       setShowPlusOne(true);
+//       setTimeout(() => setShowPlusOne(false), 1000);
+//     }
+//     setTotalPizzas(newTotal);
+//   }, [commandes]);
+useEffect(() => {
+  let totalMoy = 0;
+  let totalGrd = 0;
+  Object.values(commandes).flat().forEach(cmd => {
+    cmd.pizzas?.forEach(pizza => {
+      if (pizza.taille === 'moyenne') totalMoy++;
+      else if (pizza.taille === 'grande') totalGrd++;
+    });
+  });
+  setTotalPizzasMoy(totalMoy);
+  setTotalPizzasGrd(totalGrd);
+}, [commandes]);
 
 //   const handleDragEnd = async (event) => {
 //     const { active, over } = event;
@@ -334,13 +385,46 @@ const [modaleType, setModaleType] = useState(null); // "especes" ou "hiboutik"
 // }
 
 // };
+function formatDateLocale(date) {
+  const jour = String(date.getDate()).padStart(2, '0');
+  const mois = String(date.getMonth() + 1).padStart(2, '0');
+  const annee = date.getFullYear();
+  const heures = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const secondes = String(date.getSeconds()).padStart(2, '0');
+
+  return `${jour}/${mois}/${annee} à ${heures}:${minutes}:${secondes}`;
+}
+const now1 = new Date();
+const dateGuadeloupe1 = new Date(now1.toLocaleString("en-US", { timeZone: "America/Guadeloupe" }));
 
 
+function formatDateLocale(date) {
+  const jour = String(date.getDate()).padStart(2, '0');
+  const mois = String(date.getMonth() + 1).padStart(2, '0');
+  const annee = date.getFullYear();
+  const heures = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const secondes = String(date.getSeconds()).padStart(2, '0');
+
+  return `${jour}/${mois}/${annee} à ${heures}:${minutes}:${secondes}`;
+}
 const handleDragEnd = async (event) => {
     const { active, over } = event;
     if (!over) return;
-    const [datePart, numPart, indexPizza] = active.id.split('-');
-    const draggedCmdId = `${datePart}-${numPart}`;
+    // const [datePart, numPart, indexPizza] = active.id.split('-');
+    // const draggedCmdId = `${datePart}-${numPart}`;
+    const idParts = active.id.split('-');
+
+// Sécurité minimale
+if (idParts.length < 2) {
+  console.warn('❌ ID mal formé :', active.id);
+  return;
+}
+
+const [datePart, numPart] = idParts;
+const draggedCmdId = `${datePart}-${numPart}`;
+
     const fromCreneau = Object.entries(commandes).find(([_, cmds]) => cmds.some(cmd => cmd.numeroCommande === draggedCmdId));
     if (!fromCreneau) return;
     const draggedCommande = fromCreneau[1].find(cmd => cmd.numeroCommande === draggedCmdId);
@@ -351,6 +435,7 @@ const pizzasExistantes = (commandes[over.id] || []).reduce((total, cmd) => total
 
 // Nombre de pizzas qu’on essaie d’ajouter
 const pizzasDeplacees = draggedCommande.pizzas?.length || 0;
+console.log('🧲 Drag ID reçu :', active.id);
 
 // Si ça dépasse le quota autorisé (quotas + delta)
 if (pizzasExistantes + pizzasDeplacees > pizzasParQuart + pizzaDeltaMax) {
@@ -390,16 +475,7 @@ if (pizzasExistantes + pizzasDeplacees > pizzasParQuart + pizzaDeltaMax) {
 const nouvelleHeure = over.id;
 const now = new Date();
 const dateGuadeloupe = new Date(now.toLocaleString("en-US", { timeZone: "America/Guadeloupe" }));
-function formatDateLocale(date) {
-  const jour = String(date.getDate()).padStart(2, '0');
-  const mois = String(date.getMonth() + 1).padStart(2, '0');
-  const annee = date.getFullYear();
-  const heures = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const secondes = String(date.getSeconds()).padStart(2, '0');
 
-  return `${jour}/${mois}/${annee} à ${heures}:${minutes}:${secondes}`;
-}
 
 const logTexte = `📝 Modification commande
 
@@ -413,7 +489,7 @@ console.log(now, ' ', dateGuadeloupe,'  ',formatDateLocale(dateGuadeloupe));
 
 
 
-  // 📒 Journalisation
+  //📒 Journalisation
   await fetch('http://localhost:3001/api/logs/internes', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -424,6 +500,8 @@ console.log(now, ' ', dateGuadeloupe,'  ',formatDateLocale(dateGuadeloupe));
     }),
   });
 
+// ✅ Message de confirmation
+toast.success(`✅ Commande déplacée vers ${over.id}`);
 } catch (err) {
   console.error('❌ Erreur MAJ ou log :', err);
   toast.error('Erreur lors du déplacement');
@@ -445,7 +523,6 @@ const handlePayerHiboutik = (pizza) => {
   setModaleType('hiboutik');
 };
 
-const [commandeAModifier, setCommandeAModifier] = useState(null);
 
 useEffect(() => {
   if (!showModale || commandeAModifier) return; // 👈 ne génère pas de numéro si modification
@@ -455,6 +532,16 @@ useEffect(() => {
     .then(data => setNumeroCommande(data.numeroCommande))
     .catch(err => console.error('Erreur récupération numéro commande', err));
 }, [showModale, commandeAModifier]);
+
+ // ✅ Ne retourne rien avant d'avoir appelé tous les Hooks
+  if (!parametres) {
+    return (
+      <DashboardLayout>
+        <div className="text-white p-4">Chargement des paramètres…</div>
+      </DashboardLayout>
+    );
+  }
+
 
   return (
     <DashboardLayout>
@@ -484,7 +571,7 @@ useEffect(() => {
   <div className="w-12" /> {/* Espace gauche vide */}
 
   <div className="text-center text-white text-base font-semibold bg-gray-800 px-6 py-2 rounded-full shadow-inner">
-    {formatterDate(dateAffichee)}
+    {formatterDate(dateGuadeloupe1)}
   </div>
 
   <div className="w-12" /> {/* Espace droite vide */}
@@ -499,12 +586,12 @@ useEffect(() => {
               transition={{ duration: 0.8 }}
               className="absolute right-0 text-green-400 font-bold text-xl"
             >
-              +1
+              ++++
             </motion.div>
           )}
 
           <div className="bg-orange-600 text-white px-5 py-2 rounded-full shadow-xl text-sm font-semibold">
-            🍕 Total pizzas : {totalPizzas}
+            🍕 Moy : {totalPizzasMoy}/{pizzaMaxMoy} | Grd : {totalPizzasGrd}/{pizzaMaxGrd}
           </div>
         </div>
 
@@ -512,7 +599,7 @@ useEffect(() => {
           <FiShoppingCart size={20} /> Nouvelle commande
         </button>
 
-        <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {creneaux.map((creneau, idx) => {
             const count = (commandes[creneau.time] || []).reduce((total, cmd) => total + (cmd.pizzas?.length || 0), 0);
@@ -553,11 +640,10 @@ useEffect(() => {
     const key = `${cmd.numeroCommande}-${indexCmd}-${index}`;
 console.log('nous',cmd);
     return (
-      <div key={key}>
         <Commande
           key={key}
           id={`${cmd.numeroCommande}-${index}`}
-          pizza={{ ...pizza, modePaiement: cmd.modePaiement }}
+          pizza={{ ...pizza, modePaiement: cmd.modePaiement,commentaire: cmd.commentaire }}
           cmdId={cmd.numeroCommande}
           nomClient={cmd.nomClient ?? 'Client'}
           heureCreneau={creneau.time}
@@ -566,15 +652,11 @@ console.log('nous',cmd);
           onClick={() => setCommandeSelectionnee(cmd)}
           onPayerEspeces={handlePayerEspeces}
           onPayerHiboutik={handlePayerHiboutik}
+        afficherNomClient={index === 0} // ✅ n'affiche le nom qu'une fois
+      onAfficherDetail={() => setCommandeSelectionnee(cmd)}
+
         />
-        <button
-          onClick={() => setCommandeSelectionnee(cmd)}
-          className="ml-2 bg-white text-orange-600 font-bold px-2 py-1 rounded text-xs hover:bg-gray-100 transition"
-        >
-          Voir
-        </button>
-        
-      </div>
+      
     );
   })
 )}
@@ -705,3 +787,4 @@ listeCreneaux={creneaux.map(c => c.time)}
     </DashboardLayout>
   );
 }
+

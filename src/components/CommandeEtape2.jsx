@@ -15,7 +15,8 @@ export default function CommandeEtape2({ onNext, onBack, data, onUpdate, onAddPi
   const [selectedCreneau, setSelectedCreneau] = useState('');
   const [taille, setTaille] = useState('moyenne');
   const [base, setBase] = useState('Base tomate');
-  const [option, setOption] = useState('');
+ const [option, setOption] = useState([]);
+
   const [cuisson, setCuisson] = useState('');
   const [supplements, setSupplements] = useState([]);
   const [sousAliments, setSousAliments] = useState([]);
@@ -178,7 +179,7 @@ for (const sup of supplements) {
       taille,
       base,
       cuisson,
-      option,
+      options : option,
       supplements: baseSupplement ? [...supplements, baseSupplement] : supplements, // <-- ✔️ ICI
   sousAliments,
       prixTotal: prixTotal.toFixed(2)
@@ -189,7 +190,7 @@ for (const sup of supplements) {
       taille,
       base,
       cuisson,
-      option,
+      options :option,
       supplements: baseSupplement ? [...supplements, baseSupplement] : supplements,
   
       sousAliments,
@@ -314,18 +315,19 @@ useEffect(() => {
   );
 
   const radioButton = (selectedValue, currentValue, name, onChange) => (
-    <label className={`cursor-pointer px-4 py-2 rounded border text-center ${selectedValue === currentValue ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-900'}`}>
-      <input
-        type="radio"
-        name={name}
-        value={currentValue}
-        checked={selectedValue === currentValue}
-        onChange={onChange}
-        className="hidden"
-      />
-      {currentValue === '' ? 'Aucun' : currentValue}
-    </label>
-  );
+  <label className={`cursor-pointer block w-full px-4 py-2 mb-2 rounded border text-center transition 
+    ${selectedValue === currentValue ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-900'}`}>
+    <input
+      type="radio"
+      name={name}
+      value={currentValue}
+      checked={selectedValue === currentValue}
+      onChange={onChange}
+      className="hidden"
+    />
+    {currentValue === '' ? 'Aucun' : currentValue}
+  </label>
+);
 
 
 const baseIncluseRef = useRef('tomate'); // par défaut
@@ -387,10 +389,146 @@ console.log('on est la',description);
         
       </motion.div>
 
-      {[{ label: '📏 Taille', name: 'taille', options: ['moyenne', 'grande'], value: taille, setter: setTaille },
-        { label: '🧄 Base', name: 'base', options: baseList.map(b => b.nom), value: base, setter: setBase },
-        { label: '🧩 Options', name: 'option', options: optionList.map(o => o.nom), value: option, setter: setOption },
-        { label: '🔥 Cuisson', name: 'cuisson', options: cuissonList.map(c => c.nom), value: cuisson, setter: setCuisson }
+     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  {[{ label: '📏 Taille', name: 'taille', options: ['moyenne', 'grande'], value: taille, setter: setTaille },
+    { label: '🧄 Base', name: 'base', options: baseList.map(b => b.nom), value: base, setter: setBase },
+  ].map((group, index) => (
+    <motion.div
+      key={index}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="bg-white p-4 rounded-xl shadow w-full"
+    >
+      <label className="block font-semibold text-orange-600 mb-2">{group.label}</label>
+      <div className="flex flex-wrap gap-2">
+        {group.options.map(val => (
+          <label key={val} className="flex-1 min-w-[100px]">
+            {radioButton(group.value, val, group.name, (e) => group.setter(e.target.value))}
+          </label>
+        ))}
+      </div>
+    </motion.div>
+  ))}
+</div>
+
+
+
+      {[{ label: '➕ Suppléments', data: supplements, setData: setSupplements },
+        { label: '🚫 Sans aliments', data: sousAliments, setData: setSousAliments }
+      ]
+      .map((group, index) => (
+  <motion.div key={index} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white p-4 rounded-xl shadow">
+    <label className="block font-semibold text-orange-600 mb-2">{group.label}</label>
+    {group.data.map((item, idx) => (
+      <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2 items-center">
+        <select
+          className="px-2 py-1 border rounded bg-gray-50 w-full"
+          value={item.ingredient}
+          onChange={(e) => {
+            const selectedNom = e.target.value;
+            const next = [...group.data];
+
+            const selected = supplementsDisponibles.find(s => s.nom === selectedNom);
+
+            if (selected) {
+              next[idx] = {
+                ingredient: selected.nom,
+                ingredient_id: selected.id,
+                prix: selected.prix,
+                portion: 'entière'
+              };
+            } else {
+              next[idx] = {
+                ingredient: selectedNom,
+                portion: 'entière'
+              };
+            }
+
+            group.setData(next);
+          }}
+        >
+          <option value="">Choisir un ingrédient</option>
+{supplementsDisponibles.map((s) => (
+  <option key={s.id} value={s.nom}>
+    {group.label === '🚫 Sans aliments' ? s.nom : `${s.nom} ${s.prix ? `( +${s.prix} €)` : ''}`}
+  </option>
+))}
+        </select>
+
+        <select
+          value={item.portion}
+          onChange={(e) => {
+            const next = [...group.data];
+            next[idx].portion = e.target.value;
+            group.setData(next);
+          }}
+          className="px-2 py-1 border rounded bg-gray-50 w-full"
+        >
+          <option value=""></option>
+          <option value="entière">Entière</option>
+          <option value="moitié">Moitié</option>
+        </select>
+
+        <button
+          onClick={() => {
+            const removed = group.data[idx];
+            const next = group.data.filter((_, i) => i !== idx);
+            group.setData(next);
+
+            if (group.label === '➕ Suppléments') {
+              const selected = supplementsDisponibles.find(s => s.nom === removed.ingredient);
+              if (selected) {
+                setCoutPizza(prev => parseFloat((prev - selected.prix).toFixed(2)));
+              }
+            }
+          }}
+          className="text-red-600 hover:text-red-800 text-sm"
+          title="Supprimer"
+        >
+          ❌
+        </button>
+      </div>
+    ))}
+    <button
+      onClick={() => group.setData([...group.data, { ingredient: '', portion: 'entière' }])}
+      className="text-sm text-blue-600 hover:underline mt-2"
+    >
+      + Ajouter
+    </button>
+  </motion.div>
+))}
+
+      {[  { label: '🧩 Options', name: 'option', options: optionList.map(o => o.nom), value: option, setter: setOption }
+      ].map((group, index) => (
+       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white p-4 rounded-xl shadow">
+  <label className="block font-semibold text-orange-600 mb-2">🧩 Options</label>
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    {optionList.map(({ nom }) => {
+      const isActive = option.includes(nom);
+      return (
+        <button
+          key={nom}
+          type="button"
+          onClick={() => {
+            if (isActive) {
+              setOption(option.filter((o) => o !== nom));
+            } else {
+              setOption([...option, nom]);
+            }
+          }}
+          className={`w-full  px-4 py-2 rounded border text-center font-medium transition
+            ${isActive ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-900'}`}
+        >
+          {nom}
+        </button>
+      );
+    })}
+  </div>
+</motion.div>
+
+
+      ))}
+  {[  { label: '🔥 Cuisson', name: 'cuisson', options: cuissonList.map(c => c.nom), value: cuisson, setter: setCuisson }
       ].map((group, index) => (
         <motion.div key={index} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white p-4 rounded-xl shadow">
           <label className="block font-semibold text-orange-600 mb-2">{group.label}</label>
@@ -404,94 +542,7 @@ console.log('on est la',description);
         </motion.div>
       ))}
 
-      {[{ label: '➕ Suppléments', data: supplements, setData: setSupplements },
-        { label: '🥬 Sous-aliments', data: sousAliments, setData: setSousAliments }
-      ]
-      .filter(group => group.label !== '🥬 Sous-aliments') // 👈 masque ce bloc
-  .map((group, index) => (
-        <motion.div key={index} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white p-4 rounded-xl shadow">
-          <label className="block font-semibold text-orange-600 mb-2">{group.label}</label>
-          {group.data.map((item, idx) => (
-            <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2 items-center">
-             <select
-  className="px-2 py-1 border rounded bg-gray-50 w-full"
-  value={item.ingredient}
-onChange={(e) => {
-  const selectedNom = e.target.value;
-  const next = [...group.data];
 
-  // Recherche du supplément complet
-  const selected = supplementsDisponibles.find(s => s.nom === selectedNom);
-
-  if (selected) {
-    next[idx] = {
-      ingredient: selected.nom,
-      ingredient_id: selected.id, // <- ID à insérer en base
-      prix: selected.prix,
-      portion: 'entière'
-    };
-  } else {
-    next[idx] = {
-      ingredient: selectedNom,
-      portion: 'entière'
-    };
-  }
-
-  group.setData(next);
-}
-}
-
->
-  <option value="">Choisir un ingrédient</option>
-  {group.label === '➕ Suppléments'
-    ? supplementsDisponibles.map((s) => (
-        <option key={s.id} value={s.nom}>
-          {s.nom} (+{s.prix} €)
-        </option>
-      ))
-    : sousAlimentList.map((i) => (
-        <option key={i.id} value={i.nom}>{i.nom}</option>
-      ))
-  }
-</select>
-
-              <select
-                value={item.portion}
-                onChange={(e) => {
-                  const next = [...group.data];
-                  next[idx].portion = e.target.value;
-                  group.setData(next);
-                }}
-                className="px-2 py-1 border rounded bg-gray-50 w-full"
-              >
-                <option value="" ></option>
-                <option value="entière">Entière</option>
-                <option value="moitié gauche">Moitié gauche</option>
-                <option value="moitié droite">Moitié droite</option>
-              </select>
-              <button
-              onClick={() => {
-  const removed = group.data[idx];
-  const next = group.data.filter((_, i) => i !== idx);
-  group.setData(next);
-
-  if (group.label === '➕ Suppléments') {
-    const selected = supplementsDisponibles.find(s => s.nom === removed.ingredient);
-    if (selected) {
-      setCoutPizza(prev => parseFloat((prev - selected.prix).toFixed(2)));
-    }
-  }
-}}
-                className="text-red-600 hover:text-red-800 text-sm"
-                title="Supprimer"
-              >
-                ❌
-              </button>
-            </div>
-          ))}
-          <button onClick={() => group.setData([...group.data, { ingredient: '', portion: 'entière' }])} className="text-sm text-blue-600 hover:underline mt-2">+ Ajouter</button>
-        </motion.div>
-      ))}
     </div>
   );
 }

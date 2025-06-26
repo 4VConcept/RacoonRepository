@@ -4,6 +4,40 @@ import { motion } from 'framer-motion';
 export default function CommandeEtape1({ onNext, numeroCommande, data, onUpdate }) {
   const [selectedPizza, setSelectedPizza] = useState(data.pizzaId || null);
   const [pizzasUniques, setPizzasUniques] = useState([]);
+const couleursPizza = {
+  Margarita: '#70d466',
+  Champignon: '#70d466',
+  Végétarienne: '#70d466',
+
+  Reine: '#f490e5',
+  Jambon: '#f490e5',
+  'Jambon champi': '#f490e5',
+  Racoon: '#f490e5',
+  Roma: '#f490e5',
+
+  Sarrazine: '#f23e6e',
+  Buffalo: '#f23e6e',
+  Bolognaise: '#f23e6e',
+  Merguez: '#f23e6e',
+  Orientale: '#f23e6e',
+  Chorizo: '#f23e6e',
+
+  Saumon: '#27a5ef',
+  Napolitaine: '#27a5ef',
+  'Royal thon': '#27a5ef',
+  'Fruits de mer': '#27a5ef',
+
+  Poulet: '#d7b84b',
+
+  '4 délices': '#fbf441',
+  'Chèvre miel': '#fbf441',
+
+  'Pizza du mois': '#d65dee',
+};
+
+function getCouleurPizza(nom) {
+  return couleursPizza[nom] || '#ffffff'; // Blanc par défaut si non défini
+}
 
   useEffect(() => {
     const fetchPizzas = async () => {
@@ -53,6 +87,7 @@ const uniqueSorted = Array.from(uniqueMap.values())
   const handleSelection = (pizzaId) => {
     setSelectedPizza(pizzaId);
     onUpdate({ pizzaId });
+    onNext();
   };
 
   useEffect(() => {
@@ -61,32 +96,28 @@ const uniqueSorted = Array.from(uniqueMap.values())
 
   return (
     <div className="px-4">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
         {pizzasUniques.map((pizza) => (
           <motion.div
             key={pizza.id}
             onClick={() => handleSelection(pizza.id)}
             whileHover={{ scale: 1.05 }}
+             style={{
+      backgroundColor: getCouleurPizza(pizza.nom),
+      color: 'black',
+      minHeight: '90px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}
             className={`rounded-xl overflow-hidden border cursor-pointer transition-all shadow-md hover:shadow-lg ${
               selectedPizza === pizza.id
                 ? 'border-orange-500 ring-2 ring-orange-400'
                 : 'border-gray-300'
             }`}
           >
-            <img
-              src={
-                pizza.image_url?.trim()
-                  ? pizza.image_url
-                  : "https://cdn.pixabay.com/photo/2017/12/09/08/18/pizza-3007395_960_720.jpg"
-              }
-              alt={pizza.nom}
-              className="w-full h-32 object-cover"
-              onError={(e) => {
-                e.target.src =
-                  "https://cdn.pixabay.com/photo/2017/12/09/08/18/pizza-3007395_960_720.jpg";
-              }}
-            />
-            <div className="p-2 text-center font-semibold text-sm bg-white text-gray-800">
+          
+            <div className="p-1 text-center font-semibold text-lg text-black">
               {pizza.nom}
             </div>
           </motion.div>

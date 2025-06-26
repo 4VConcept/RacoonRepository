@@ -62,10 +62,10 @@ router.delete('/:numeroCommande', async (req, res) => {
     if (result.changes === 0) {
       return res.status(404).json({ message: 'Commande non trouvée.' });
     }
-await db.run(
-  `INSERT INTO logs_internes (action, utilisateur) VALUES (?, ?)`,
-  [`🗑️ Suppression de la commande ${id} dans commandes et commandeToHiboutik`, 'système']
-);
+// await db.run(
+//   `INSERT INTO logs_internes (action, utilisateur) VALUES (?, ?)`,
+//   [`🗑️ Suppression de la commande ${id} dans commandes et commandeToHiboutik`, 'système']
+// );
     return res.status(200).json({ message: 'Commande supprimée avec succès dans toutes les tables.' });
   } catch (err) {
     console.error('Erreur suppression commande :', err);
@@ -90,7 +90,16 @@ router.patch('/:numeroCommande/creneau', async (req, res) => {
 
 });
 router.get('/nouveau-numero', async (req, res) => {
-  const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+const now = new Date();
+const formatter = new Intl.DateTimeFormat('fr-CA', {
+  timeZone: 'America/Guadeloupe',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+});
+const [year, month, day] = formatter.format(now).split('-');
+const today = `${year}${month}${day}`;
+
   console.log('🕒 Requête numéro commande pour la date :', today);
 
   try {

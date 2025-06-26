@@ -9,6 +9,7 @@ import ValidationAnimation from '../components/ValidationAnimation';
 import baseList from '../data/bases';
 import supplementList from '../data/supplements';
 import optionList  from '../data/options';
+import toast from 'react-hot-toast';
 import { useParametres } from '../context/ParametresContext';
 import axios from 'axios';
 
@@ -50,6 +51,7 @@ export default function CommandeModale({ isOpen, onClose, pizzaInitiale = null, 
 
 
     const parametres = useParametres();
+const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isModification = !!commandeDataInitiale;
 
@@ -145,21 +147,22 @@ const appliqueRemise = dateCommande < dateLimiteRemise;
 
   const handleValidation = async () => {
 
-
+ if (isSubmitting) return; // ignore les clics répétés
+  setIsSubmitting(true); // bloque immédiatement
   if (pizzasCommandees.length === 0) {
     alert("❌ Vous devez ajouter au moins une pizza pour valider la commande.");
-    return;
+     setIsSubmitting(false); return;
   }
 
   if (!commandeData.nomClient || !commandeData.telephone) {
     alert("❌ Veuillez renseigner le nom et le téléphone du client.");
-    return;
+     setIsSubmitting(false); return;
   }
   const creneauFinal = commandeData.creneau || selectedTime;
 
   if (!creneauFinal) {
     alert("❌ Aucun créneau de livraison sélectionné.");
-    return;
+     setIsSubmitting(false); return;
   }
 
   // 🧠 Si on modifie une commande, on récupère son numéro ; sinon on garde le généré
@@ -210,6 +213,7 @@ console.log('🧾 Numéro de commande retenu :', numeroCommandeFinal);
 };
 
 const pizzasNettoyees = await Promise.all(pizzasCommandees.map(enrichirPizza));
+console.log('🧪 contenu commandeData AVANT POST :', commandeData);
 
 const commandeFinale = {
   numeroCommande: numeroCommandeFinal,
@@ -225,6 +229,8 @@ const commandeFinale = {
   creneau: creneauFinal,
   modePaiement: commandeData.modePaiement?.trim() || 'non',
   appliqueRemise: appliqueRemise ? 1 : 0,
+    commentaire: commandeData.commentaire?.trim() || '' // ✅ Ajoute ceci
+
 };
 console.log('comm', commandeFinale);
 
@@ -261,16 +267,22 @@ try {
     }
 
 
-  setShowSuccess(true);
-  setTimeout(() => {
-    setShowSuccess(false);
-    onClose();
-    reinitCommande();
-  }, 3500);
-
+  // setShowSuccess(true);
+  // setTimeout(() => {
+  //   setShowSuccess(false);
+  //   onClose();
+  //   reinitCommande();
+  // }, 3500);
+toast.success(
+  isModification ? '✅ Commande modifiée avec succès' : '✅ Commande enregistrée avec succès'
+);
+onClose();
+reinitCommande();
+setIsSubmitting(false);
 } catch (err) {
     console.error('❌ Erreur sauvegarde commande', err);
     alert("Erreur lors de l’enregistrement de la commande.");
+ setIsSubmitting(false);
   }
 };
 const [resetPizzaForm, setResetPizzaForm] = useState(false);
@@ -403,7 +415,11 @@ useEffect(() => {
         nomClient: commandeDataInitiale.nomClient,
         telephone: commandeDataInitiale.telephone,
         creneau: commandeDataInitiale.creneau,
+           commentaire: commandeDataInitiale.commentaire || '', // ✅ AJOUTE CECI
+  
       });
+      console.log('🗒️ Commentaire transmis au backend :', commandeData.commentaire, ' ---',commandeDataInitiale.commentaire );
+
       setPizzasCommandees(commandeDataInitiale.pizzas || []);
       setEtape(3); // Va directement à l’étape 3
     }
@@ -415,8 +431,8 @@ useEffect(() => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center">
-       <ValidationAnimation visible={showSuccess} onFinish={() => {}} numeroCommande={numeroCommande}   texte={isModification ? 'Commande modifiée avec succès 🎯' : 'Commande créée avec succès 🎉'}
-/>
+       {/* <ValidationAnimation visible={showSuccess} onFinish={() => {}} numeroCommande={numeroCommande}   texte={isModification ? 'Commande modifiée avec succès 🎯' : 'Commande créée avec succès 🎉'}
+/> */}
 <div className="bg-white text-gray-900 w-full max-w-4xl h-[90vh] rounded-xl shadow-lg flex flex-col">
 
   {/* HEADER FIXE AVEC STYLE */}
@@ -504,7 +520,7 @@ commandes={commandes}
 
 
 
-         {etape == 1 && (
+         {/* {etape == 1 && (
             <button
               onClick={handleSuivant}
               className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 flex items-center gap-2"
@@ -512,7 +528,7 @@ commandes={commandes}
               Suivant <FiShoppingCart />
             </button>
           
-          )}
+          )} */}
 
            {etape == 2 && (
             // <button
@@ -532,9 +548,13 @@ commandes={commandes}
             
           <button
               onClick={handleValidation}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              disabled={showSuccess}
-            >
+             disabled={showSuccess || isSubmitting}
+            className={`flex items-center gap-2 px-4 py-2 text-white rounded ${
+    isSubmitting
+      ? 'bg-gray-400 cursor-not-allowed'
+      : 'bg-green-600 hover:bg-green-700'
+  }`}
+>
               <FiCheckCircle /> 
              
    {commandeDataInitiale ? 'Modifier la commande' : 'Mettre en préparation'}

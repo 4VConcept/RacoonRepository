@@ -85,11 +85,11 @@ const currentPath = location.pathname;
  >🧪 {menuOuvert && 'Diagnostic API'}
             </motion.a>
 
-            {/* <motion.a onClick={() => { navigate('/journalisation'); setMenuOuvert(false); }} whileHover={{ scale: 1.05 }}
+            <motion.a onClick={() => { navigate('/journalisation'); setMenuOuvert(false); }} whileHover={{ scale: 1.05 }}
                        className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all cursor-pointer 
     ${currentPath === '/journalisation' ? 'bg-orange-600 text-white font-semibold' : 'text-white hover:bg-orange-600 hover:text-white'}`}
  > 🧾 {menuOuvert && 'Journalisation'}
-            </motion.a> */}
+            </motion.a>
             <motion.a onClick={() => { navigate('/admin-settings'); setMenuOuvert(false); }} whileHover={{ scale: 1.05 }}
                        className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all cursor-pointer 
     ${currentPath === '/admin-settings' ? 'bg-orange-600 text-white font-semibold' : 'text-white hover:bg-orange-600 hover:text-white'}`}

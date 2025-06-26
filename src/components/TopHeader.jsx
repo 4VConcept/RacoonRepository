@@ -29,7 +29,7 @@ useEffect(() => {
   return (
     <div className="flex justify-between items-center bg-gray-800 px-6 py-3 rounded-xl shadow mb-6">
       <div className="text-sm text-gray-300">
-        👤 Connecté : <span className="font-semibold text-white">{email}</span>
+        👤 Connecté : <span className="font-semibold text-white">ADMIN</span>
       </div>
 
     {apiStatus !== null && (

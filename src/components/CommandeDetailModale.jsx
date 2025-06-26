@@ -15,38 +15,50 @@ export default function CommandeDetailModale({ commande, onClose ,onPayer, onMod
 
 // ⏱ Fonction pour l'heure actuelle en Guadeloupe
 function getDateInGuadeloupe() {
-  const now = new Date();
-  const formatter = new Intl.DateTimeFormat('fr-CA', {
-    timeZone: 'America/Guadeloupe',
-    hour12: false,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-  const parts = formatter.formatToParts(now);
-  const obj = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-  return new Date(`${obj.year}-${obj.month}-${obj.day}T${obj.hour}:${obj.minute}:${obj.second}`);
+  const date = new Date();
+  const guadeloupeDate = new Date(date.toLocaleString("en-US", { timeZone: "America/Guadeloupe" }));
+
+  const dd = String(guadeloupeDate.getDate()).padStart(2, '0');
+  const mm = String(guadeloupeDate.getMonth() + 1).padStart(2, '0');
+  const yyyy = guadeloupeDate.getFullYear();
+  const hh = String(guadeloupeDate.getHours()).padStart(2, '0');
+  const min = String(guadeloupeDate.getMinutes()).padStart(2, '0');
+  const ss = String(guadeloupeDate.getSeconds()).padStart(2, '0');
+
+  return `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss}`;
+}
+
+function getDateHeureGuadeloupeISO() {
+  const date = new Date();
+  const dateGuadeloupe = new Date(date.toLocaleString("en-US", { timeZone: "America/Guadeloupe" }));
+
+  const yyyy = dateGuadeloupe.getFullYear();
+  const mm = String(dateGuadeloupe.getMonth() + 1).padStart(2, '0');
+  const dd = String(dateGuadeloupe.getDate()).padStart(2, '0');
+  const hh = String(dateGuadeloupe.getHours()).padStart(2, '0');
+  const min = String(dateGuadeloupe.getMinutes()).padStart(2, '0');
+  const ss = String(dateGuadeloupe.getSeconds()).padStart(2, '0');
+
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
 }
 
 
  const [autoriserModif, setAutoriserModif] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
-    if (!commande?.creneau) return;
+useEffect(() => {
+  if (!commande?.creneau) return;
 
-    const now = getDateInGuadeloupe();
-    const [h, m] = commande.creneau.split(':');
-    const creneauDate = new Date(now);
-    creneauDate.setHours(parseInt(h), parseInt(m), 0, 0);
+  const now = new Date(); // ✅ ici on utilise un vrai objet Date
+  const [h, m] = commande.creneau.split(':');
+  const creneauDate = new Date();
+  creneauDate.setHours(parseInt(h), parseInt(m), 0, 0);
 
-    const diffMinutes = (creneauDate - now) / 60000;
-    setAutoriserModif(diffMinutes >= 15);
-    
-  }, [commande]);
+  const diffMinutes = (creneauDate.getTime() - now.getTime()) / 60000;
+
+  setAutoriserModif(diffMinutes >= 15);
+}, [commande]);
+
 
   if (!commande) return null;
   const marquerCommePaye = async (mode) => {
@@ -80,7 +92,7 @@ const supprimerCommande = async (commande) => {
 🧾 N° : ${commande.numeroCommande}
 👤 Client : ${commande.nomClient || 'Anonyme'}
 🥐 Quantité : ${commande.pizzas?.length || 0} pizza(s)
-📅 Date : ${new Date().toISOString()}
+📅 Date : ${getDateInGuadeloupe()}
 `;
 
      // 📒 Journalisation
@@ -122,6 +134,7 @@ const formatDateFrUTC = (isoDate) => {
 
   return `${dd}/${mm}/${yyyy} à ${hh}:${min}:${ss}`;
 };
+console.log('🎯 modePaiement =', commande.modePaiement);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
@@ -158,6 +171,7 @@ const formatDateFrUTC = (isoDate) => {
               <p className="text-red-500">⚠️ Informations client manquantes</p>
             )}
           </div>
+          
         </div>
 
         {/* Pizzas */}
@@ -168,16 +182,26 @@ const formatDateFrUTC = (isoDate) => {
           <ul className="ml-6 list-disc space-y-2">
             {commande.pizzas.map((pizza, i) => (
               <li key={i}>
-                <strong>{pizza.nom ?? 'Pizza'}</strong> – {pizza.taille}, {pizza.base}
-                {pizza.option && `, option : ${pizza.option}`}
-                {pizza.cuisson && `, cuisson : ${pizza.cuisson}`}
-               {pizza.supplements?.length > 0 && (
+               <strong>{pizza.nom ?? 'Pizza'}</strong> – {pizza.taille}, {pizza.base}
+{Array.isArray(pizza.options) && pizza.options.length > 0 && `, ${pizza.options.join(', ')}`}
+{pizza.cuisson && `, cuisson : ${pizza.cuisson}`}
+{pizza.supplements?.length > 0 && (
   `, Suppléments : ${pizza.supplements.map(s => `${s.ingredient} (${s.portion})`).join(', ')}`
 )}{pizza.sousAliments?.length > 0 && `, sans : ${pizza.sousAliments.join(', ')}`}
               </li>
             ))}
           </ul>
         </div>
+{commande.commentaire?.trim() && (
+  <div className="mb-6">
+    <h3 className="text-xl font-semibold flex items-center gap-2 mb-1">
+      📝 Commentaire spécial
+    </h3>
+    <div className="ml-6 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-3 rounded shadow-sm">
+      {commande.commentaire}
+    </div>
+  </div>
+)}
 
         {/* Total */}
         <div className="text-right text-xl font-bold text-green-600 mb-4">
@@ -207,32 +231,40 @@ const formatDateFrUTC = (isoDate) => {
 {commande.modePaiement?.trim()=='non' && (
    <>
           <button
-            className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md font-semibold"
-           disabled={isUpdating}  onClick={async () => {
-  //await marquerCommePaye('carte');
-// 👉 Envoi vers Hiboutik
+  className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md font-semibold"
+  disabled={isUpdating}
+  onClick={async () => {
+    if (isUpdating) return; // 🔒 protection clics multiples
+    setIsUpdating(true);
+
+    try {
       const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/versHiboutik`, {
-        
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ numeroCommande: commande.numeroCommande })
-
+        body: JSON.stringify({ numeroCommande: commande.numeroCommande })
       });
 
       const data = await res.json();
 
       if (data.success) {
-        toast.success("✅ Commande envoyée à Hiboutik !");
+        await marquerCommePaye('hiboutik');
       } else {
         toast.error("❌ Erreur lors de l'envoi à Hiboutik");
         console.error(data);
       }
 
-      onClose(); // 🔚 Ferme la modale
+      onClose();
+    } catch (err) {
+      console.error("Erreur Hiboutik :", err);
+      toast.error("❌ Erreur réseau lors de l'envoi à Hiboutik");
+    } finally {
+      setIsUpdating(false);
+    }
+  }}
+>
+  <FiCreditCard /> Hiboutik
+</button>
 
-}}>
-            <FiCreditCard /> Hiboutik
-          </button>
           <button
             className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 rounded-md font-semibold"
         disabled={isUpdating} onClick={async () => {
