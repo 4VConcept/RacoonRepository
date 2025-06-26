@@ -251,20 +251,27 @@ try {
       body: JSON.stringify(commandeFinale),
     });
 
-    if (isModification) {
-      setCommandes((prev) => {
-        const nouveau = { ...prev };
-        // Supprime de tous les créneaux
-        for (const creneau in nouveau) {
-          nouveau[creneau] = nouveau[creneau].filter(c => c.numeroCommande !== numeroCommande);
-        }
-        // Ajoute dans le bon créneau
-        nouveau[creneauFinal] = [...(nouveau[creneauFinal] || []), commandeFinale];
-        return nouveau;
-      });
-    } else {
-      onAddCommande(creneauFinal, commandeFinale);
+   if (isModification) {
+  setCommandes((prev) => {
+    const nouveau = { ...prev };
+
+    // 🔁 Supprime la commande existante de tous les créneaux
+    for (const creneau in nouveau) {
+      nouveau[creneau] = nouveau[creneau].filter(cmd => cmd.numeroCommande !== numeroCommandeFinal);
     }
+
+    // 🔁 Ajoute la commande modifiée dans le bon créneau
+    if (!nouveau[creneauFinal]) {
+      nouveau[creneauFinal] = [];
+    }
+    nouveau[creneauFinal].push(commandeFinale);
+
+    return nouveau;
+  });
+} else {
+  onAddCommande(creneauFinal, commandeFinale);
+}
+
 
 
   // setShowSuccess(true);
@@ -279,6 +286,7 @@ toast.success(
 onClose();
 reinitCommande();
 setIsSubmitting(false);
+
 } catch (err) {
     console.error('❌ Erreur sauvegarde commande', err);
     alert("Erreur lors de l’enregistrement de la commande.");

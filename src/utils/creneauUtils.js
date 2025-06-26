@@ -36,17 +36,26 @@ export function trouverPremierCreneauDisponible(commandes, listeCreneaux, nombre
   return null; // aucun créneau disponible
 }
 
-export function getCreneauxDisponibles(commandes, listeCreneaux, nombrePizzas, pizzasParQuart, pizzaDeltaMax, heureActuelle) {
+export function getCreneauxDisponibles(
+  commandes,
+  listeCreneaux,
+  nombrePizzas,
+  pizzasParQuart,
+  pizzaDeltaMax,
+  heureActuelle,
+  isModification = false,
+  creneauInitial = null
+) {
   console.log('🔍 Appel getCreneauxDisponibles avec :');
   console.log('🕒 heureActuelle :', heureActuelle);
   console.log('📦 commandes :', commandes);
   console.log('🗓️ listeCreneaux :', listeCreneaux);
   console.log('🍕 nombrePizzas :', nombrePizzas);
   console.log('🎯 Quota / Delta :', pizzasParQuart, pizzaDeltaMax);
+  console.log('✏️ Mode modification :', isModification, '| Créneau initial :', creneauInitial);
 
   const resultat = listeCreneaux
     .filter(cr => {
-      // Ignorer les créneaux passés
       if (cr < heureActuelle) {
         console.log(`⛔ ${cr} ignoré car passé`);
         return false;
@@ -60,8 +69,18 @@ export function getCreneauxDisponibles(commandes, listeCreneaux, nombrePizzas, p
       const placesRestantes = (pizzasParQuart + pizzaDeltaMax) - pizzasDansCreneau;
       const possible = placesRestantes >= nombrePizzas;
 
-      console.log(`➡️ ${cr} : ${pizzasDansCreneau} pizzas dans ce créneau, ${placesRestantes} places restantes — ${possible ? '✅ OK' : '❌ Trop plein'}`);
-      return possible;
+      if (possible) {
+        console.log(`✅ ${cr} : ${placesRestantes} places restantes`);
+        return true;
+      }
+
+      if (isModification && cr === creneauInitial) {
+        console.log(`⚠️ ${cr} conservé malgré surcharge (modification en cours)`);
+        return true;
+      }
+
+      console.log(`❌ ${cr} : surcharge (${placesRestantes} restants)`);
+      return false;
     })
     .map(cr => {
       const pizzasDansCreneau = (commandes[cr] || []).reduce(

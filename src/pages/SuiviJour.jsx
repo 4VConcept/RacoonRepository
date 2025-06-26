@@ -411,7 +411,9 @@ function formatDateLocale(date) {
 }
 const handleDragEnd = async (event) => {
     const { active, over } = event;
-    if (!over) return;
+
+    if (!over || !active || active.id === over.id) return;
+
     // const [datePart, numPart, indexPizza] = active.id.split('-');
     // const draggedCmdId = `${datePart}-${numPart}`;
     const idParts = active.id.split('-');
@@ -428,6 +430,7 @@ const draggedCmdId = `${datePart}-${numPart}`;
     const fromCreneau = Object.entries(commandes).find(([_, cmds]) => cmds.some(cmd => cmd.numeroCommande === draggedCmdId));
     if (!fromCreneau) return;
     const draggedCommande = fromCreneau[1].find(cmd => cmd.numeroCommande === draggedCmdId);
+   if (!draggedCommande) return;
     const pizzasDemandees = draggedCommande?.pizzas?.length || 0;
    // const pizzasExistantes = (commandes[over.id] || []).flatMap(c => c.pizzas).length;
  // Compter le nombre de pizzas déjà dans le créneau cible
@@ -435,7 +438,7 @@ const pizzasExistantes = (commandes[over.id] || []).reduce((total, cmd) => total
 
 // Nombre de pizzas qu’on essaie d’ajouter
 const pizzasDeplacees = draggedCommande.pizzas?.length || 0;
-console.log('🧲 Drag ID reçu :', active.id);
+console.log('🧲 Drag ID reçu :', active.id, pizzasDeplacees);
 
 // Si ça dépasse le quota autorisé (quotas + delta)
 if (pizzasExistantes + pizzasDeplacees > pizzasParQuart + pizzaDeltaMax) {
@@ -638,7 +641,7 @@ useEffect(() => {
     const nomPizza = pizza.nom?.toUpperCase() ?? 'PIZZA';
 
     const key = `${cmd.numeroCommande}-${indexCmd}-${index}`;
-console.log('nous',cmd);
+console.log('nous',key);
     return (
         <Commande
           key={key}

@@ -19,7 +19,7 @@ export default function CommandeEtape3({
   onDelete, onAddPizza,onUpdate, commandes,
   listeCreneaux,
   pizzasParQuart,
-  delta,prioriserHoraire,selectedTime
+  delta,prioriserHoraire,selectedTime,estModification
 }) {
   useEffect(() => {
   console.log("🧾 pizzasCommandees reçues dans Etape3 :", pizzasCommandees);
@@ -33,20 +33,35 @@ const heureActuelle = new Date().toLocaleTimeString('fr-FR', {
   hour12: false
 });
 console.log("listeCreneaux =", listeCreneaux);
-console.log("commandes =", commandes);
+console.log("commandes1 =", commandes);
+
 useEffect(() => {
   console.log('🧪 PRIORISATION ACTIVÉE ?', prioriserHoraire);
   console.log('🧪 selectedTime reçu :', selectedTime);
+   let ancienCreneau2 = null;
 
+if (estModification) {
+    Object.entries(commandes || {}).forEach(([creneau, liste]) => {
+      liste.forEach((cmd) => {
+        ancienCreneau2 = creneau;
+          console.log("✅ Ancien créneau trouvé après trim :", creneau);
+        
+      });
+    });
+  } else {
+    console.log("ℹ️ Pas en mode modification, aucun ancien créneau à chercher.");
+  }
   const result = getCreneauxDisponibles(
     commandes,
     listeCreneaux,
     pizzasCommandees.length,
     pizzasParQuart,
     delta,
-    heureActuelle
+    heureActuelle,
+    estModification,
+  ancienCreneau2
   );
-
+console.log("creneauxdispo",result);
   if (prioriserHoraire && selectedTime && result.find(c => c.time === selectedTime)) {
     setCreneauxDisponibles(result);
     setCreneau(selectedTime);
@@ -61,6 +76,43 @@ useEffect(() => {
 
 
 const [creneauSelectionne, setCreneauSelectionne] = useState(creneauxDisponibles[0]?.time || '');
+
+useEffect(() => {
+  if (!creneauxDisponibles.length) return;
+
+  let ancienCreneau = null;
+
+  if (estModification) {
+    Object.entries(commandes || {}).forEach(([creneau, liste]) => {
+      liste.forEach((cmd) => {
+        ancienCreneau = creneau;
+          console.log("✅ Ancien créneau trouvé après trim :", creneau);
+        
+      });
+    });
+  } else {
+    console.log("ℹ️ Pas en mode modification, aucun ancien créneau à chercher.");
+  }
+
+  console.log("📍 ancienCreneau final :", ancienCreneau);
+  console.log("🕹 selectedTime =", selectedTime);
+
+  let creneauInitial = '';
+
+  if (estModification && ancienCreneau && creneauxDisponibles.find(c => c.time === ancienCreneau)) {
+    creneauInitial = ancienCreneau;
+    console.log("✅ Créneau modif sélectionné :", creneauInitial);
+  } else if (prioriserHoraire && selectedTime && creneauxDisponibles.find(c => c.time === selectedTime)) {
+    creneauInitial = selectedTime;
+    console.log("✅ Créneau priorisé sélectionné :", creneauInitial);
+  } else {
+    creneauInitial = creneauxDisponibles[0]?.time || '';
+    console.log("🕒 Créneau par défaut sélectionné :", creneauInitial);
+  }
+
+  setCreneau(creneauInitial);
+}, [creneauxDisponibles, prioriserHoraire, selectedTime, numeroCommande, commandes, estModification]);
+
 
 
   const [commandeData, setCommandeData] = useState({
@@ -96,23 +148,7 @@ useEffect(() => {
     const now = new Date();
     return now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   };
-// const getPrixBase = (baseNom) => {
-//   const base = baseList.find(b => b.nom === baseNom);
-//   return base ? base.prixSupp || 0 : 0;
-// };
-// const calculerPrix = (pizza) => {
-//   const base = pizza.prixBase || 0;
-//   const baseSupp = pizza.prixBaseCreme || 0;
 
-//   const supplementsPrix = (pizza.supplements ?? []).reduce((total, s) => {
-//     const supp = supplementList.find(i => i.nom === s.ingredient);
-//     return total + (pizza.taille === 'grande' ? supp?.prixGrande || 0 : supp?.prixMoyenne || 0);
-//   }, 0);
-
-//   const optionPrix = optionList.find(o => o.nom === pizza.option)?.prix || 0;
-
-//   return base + baseSupp + supplementsPrix + optionPrix;
-// };
 
 const [totalFinal, setTotalFinal] = useState(0);
 const [appliqueRemise, setAppliqueRemise] = useState(false);
@@ -137,11 +173,7 @@ const totalFinal = appliqueRemise ? totalSansRemise * 0.95 : totalSansRemise;
   onUpdate({ nomClient, telephone, creneau, totalFinal,commentaire: commentaire.trim() || '' });
 }, [nomClient, telephone, creneau, pizzasCommandees, heureCommande, commentaire]);
 
-// useEffect(() => {
-//   if (creneauxDisponibles.length > 0 && !creneau) {
-//     setCreneau(creneauxDisponibles[0].time);
-//   }
-// }, [creneauxDisponibles]);
+
  
   return (
     <div className="space-y-6 p-4 text-gray-800">
