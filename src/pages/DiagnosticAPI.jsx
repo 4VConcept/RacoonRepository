@@ -158,7 +158,15 @@ export default function DiagnosticAPI() {
   <FiRefreshCcw className="text-indigo-600" />
   Synchronisation API
 </motion.h1>
-            <CustomButton onClick={synchroniserTous} loading={syncStatus === 'syncing'} label="Synchroniser API HIBOUTIK" icon={<FiRefreshCcw />} color="bg-indigo-600" />
+            {/* <CustomButton onClick={synchroniserTous} loading={syncStatus === 'syncing'} label="Synchroniser API HIBOUTIK" icon={<FiRefreshCcw />} color="bg-indigo-600" /> */}
+<CustomButton
+  onClick={() => {}}
+  loading={false}
+  label="Synchronisation désactivée"
+  icon={<FiRefreshCcw />}
+  color="bg-gray-400"
+  className="cursor-not-allowed"
+ />
 
             {syncStatus === 'syncing' && (
               <div className="w-full bg-gray-200 rounded-full h-2 mt-4 overflow-hidden">

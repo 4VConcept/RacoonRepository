@@ -187,7 +187,7 @@ console.log('🎯 modePaiement =', commande.modePaiement);
 {pizza.cuisson && `, cuisson : ${pizza.cuisson}`}
 {pizza.supplements?.length > 0 && (
   `, Suppléments : ${pizza.supplements.map(s => `${s.ingredient} (${s.portion})`).join(', ')}`
-)}{pizza.sousAliments?.length > 0 && `, sans : ${pizza.sousAliments.join(', ')}`}
+)}{pizza.sousAliments?.length > 0 && `, Sans : ${pizza.sousAliments.map(s => `${s.ingredient} (${s.portion})`).join(', ')}`}
               </li>
             ))}
           </ul>
@@ -238,7 +238,7 @@ console.log('🎯 modePaiement =', commande.modePaiement);
     setIsUpdating(true);
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/versHiboutik`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/commandes/versHiboutik`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ numeroCommande: commande.numeroCommande })
