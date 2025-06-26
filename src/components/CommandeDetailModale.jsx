@@ -65,7 +65,7 @@ useEffect(() => {
     try {
       setIsUpdating(true);
     
-     await axios.put(`http://localhost:3001/api/commandes/${commande.numeroCommande}/payer`, {
+     await axios.put(`${import.meta.env.VITE_API_BASE}/api/commandes/${commande.numeroCommande}/payer`, {
         modePaiement: mode,
       }); 
   toast.success(`📦 Envoi encaissement de la commande ${commande.numeroCommande} en mode ${mode}`);
@@ -84,7 +84,7 @@ const supprimerCommande = async (commande) => {
 
   try {
     // Suppression en base
-    await axios.delete(`/api/commandes/${commande.numeroCommande}`);
+    await axios.delete(`${import.meta.env.VITE_API_BASE}/api/commandes/${commande.numeroCommande}`);
 
     // Création du log
     const logTexte = `🗑️ Suppression commande
@@ -96,7 +96,7 @@ const supprimerCommande = async (commande) => {
 `;
 
      // 📒 Journalisation
-  await fetch('http://localhost:3001/api/logs/internes', {
+  await fetch(`${import.meta.env.VITE_API_BASE}/api/logs/internes`, {
       method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

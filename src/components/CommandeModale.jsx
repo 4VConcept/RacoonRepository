@@ -165,25 +165,54 @@ const appliqueRemise = dateCommande < dateLimiteRemise;
      setIsSubmitting(false); return;
   }
 
-  // 🧠 Si on modifie une commande, on récupère son numéro ; sinon on garde le généré
-const numeroCommandeFinal =
-  commandeDataInitiale?.numeroCommande || numeroCommande;
+  
 
-console.log('🧾 Numéro de commande retenu :', numeroCommandeFinal);
+// 🧠 Si on modifie une commande, on récupère son numéro ; sinon on garde le généré
+let numeroCommandeFinal = commandeDataInitiale?.numeroCommande || numeroCommande;
 
-// 🔁 Supprimer la commande existante si modification
-  if (isModification) {
-    try {
-      await fetch(`http://localhost:3001/api/commandes/${numeroCommandeFinal}`, {
-        method: 'DELETE',
-      });
-      console.log(`🗑️ Commande ${numeroCommandeFinal} supprimée avant recréation`);
-    } catch (err) {
-      console.error("❌ Erreur suppression commande :", err);
-      alert("Erreur lors de la suppression de l'ancienne commande.");
-      return;
+// 🔒 Vérifie que le numéro de commande n'existe pas déjà (hors modification)
+if (!isModification) {
+  try {
+    const verifResponse = await fetch(`${import.meta.env.VITE_API_BASE}api/commandes/verifier/${numeroCommandeFinal}`);
+    const verifData = await verifResponse.json();
+
+    if (verifResponse.ok && verifData.existe) {
+      console.warn("⚠️ Numéro déjà utilisé. Récupération d’un nouveau...");
+      // 🔁 On appelle un nouveau numéro unique
+      const nouveauNumeroResponse = await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/nouveau-numero`);
+      const nouveauNumeroData = await nouveauNumeroResponse.json();
+
+      if (!nouveauNumeroResponse.ok || !nouveauNumeroData.numero) {
+        throw new Error("Impossible d'obtenir un nouveau numéro.");
+      }
+
+      numeroCommandeFinal = nouveauNumeroData.numero;
     }
+  } catch (err) {
+    console.error("❌ Erreur lors de la vérification ou récupération du numéro :", err);
+    toast.error("Erreur lors de la génération du numéro de commande.");
+    setIsSubmitting(false);
+    return;
   }
+}
+
+// 🗑️ Supprime l'ancienne commande si on est en mode modification
+if (isModification) {
+  try {
+    await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/${numeroCommandeFinal}`, {
+      method: 'DELETE',
+    });
+    console.log(`🗑️ Commande ${numeroCommandeFinal} supprimée avant recréation`);
+  } catch (err) {
+    console.error("❌ Erreur suppression commande :", err);
+    toast.error("Erreur lors de la suppression de l'ancienne commande.");
+    setIsSubmitting(false);
+    return;
+  }
+}
+
+
+
   const enrichirPizza = async (pizza) => {
   const supplements = await Promise.all(
     (pizza.supplements || []).map(async (s) => {
@@ -245,7 +274,7 @@ console.log('comm', commandeFinale);
 // .catch(err => console.error('❌ Erreur sauvegarde commande', err));
 
 try {
-    await fetch('http://localhost:3001/api/commandes', {
+    await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(commandeFinale),
@@ -376,7 +405,10 @@ const resetCommande = () => {
   setPizzasCommandees([]);
   setEditIndex(null);
   setEtape(1);
+
+  if(!isModification){
   annulerDernierNumero();
+  }
 };
 const reinitCommande = () => {
   setCommandeData({});
@@ -387,7 +419,7 @@ const reinitCommande = () => {
 };
 const annulerDernierNumero = async () => {
   try {
-    const response = await fetch('http://localhost:3001/api/commandes/annuler-dernier-numero', {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/annuler-dernier-numero`, {
       method: 'POST',
     });
     const data = await response.json();
@@ -522,7 +554,7 @@ commandes={commandes}
     }}
     className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
   >
-    <FiX /> Annuler la commande
+    <FiX />  {isModification ? 'Annuler' : 'Annuler la commande'}
   </button>
 
 

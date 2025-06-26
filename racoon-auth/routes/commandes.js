@@ -17,6 +17,26 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: 'Erreur lors de l’enregistrement' });
   }
 });
+// Vérifier si un numéro de commande existe déjà
+router.get('/verifier/:numeroCommande', async (req, res) => {
+  const { numeroCommande } = req.params;
+
+  try {
+    const [rows] = await db.query(
+      'SELECT 1 FROM commandes WHERE numeroCommande = ? LIMIT 1',
+      [numeroCommande]
+    );
+
+    if (rows.length > 0) {
+      return res.json({ existe: true });
+    } else {
+      return res.json({ existe: false });
+    }
+  } catch (err) {
+    console.error('Erreur vérification numeroCommande :', err);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
 
 
 router.get('/', async (req, res) => {

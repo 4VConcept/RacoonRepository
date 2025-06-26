@@ -103,21 +103,24 @@ console.log('🧾 Commentaire pour', cmdId, ':', pizza.commentaire);
 
 
 
-   {pizza.supplements?.length > 0 && (
+ {pizza.supplements?.length > 0 && (
   <div className="flex flex-wrap gap-1 items-center mt-1">
-    {pizza.supplements.map((s, i) => {
-      const portion = s.portion?.toLowerCase();
-      const estMoitié = portion === 'moitié';
+    {pizza.supplements
+      .filter((s) => s.description && s.description.trim() !== '')
+      .map((s, i) => {
+        const portion = s.portion?.toLowerCase();
+        const estMoitié = portion === 'moitié';
 
-      return (
-        <span key={i} className="bg-green-100 text-green-800 text-sm font-medium px-2 py-0.5 rounded-full">
-          {s.description.toUpperCase()}
-          {estMoitié && ` (moitié) `}
-        </span>
-      );
-    })}
+        return (
+          <span key={i} className="bg-green-100 text-green-800 text-sm font-medium px-2 py-0.5 rounded-full">
+            {s.description.toUpperCase()}
+            {estMoitié && ' (moitié)'}
+          </span>
+        );
+      })}
   </div>
 )}
+
 
 
   {pizza.sousAliments?.length > 0 && (

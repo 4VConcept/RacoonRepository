@@ -29,7 +29,7 @@ export default function SuiviFinancier() {
   useEffect(() => {
     const fetchCommandes = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/commandes/suivi-financier');
+        const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/suivi-financier`);
         const data = await res.json();
 
        const regroupées = {};

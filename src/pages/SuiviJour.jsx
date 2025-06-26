@@ -164,7 +164,7 @@ useEffect(() => {
 
     // MAJ distant
     try {
-      await fetch(`http://localhost:3001/api/commandes/${draggedCmdId}/creneau`, {
+      await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/${draggedCmdId}/creneau`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nouveauCreneau: id }),
@@ -211,7 +211,7 @@ const ajouterCommande = (creneauId, commande) => {
     try {
       const dateStr = new Date(dateAffichee).toISOString().split('T')[0];
   
-      const response = await fetch(`http://localhost:3001/api/commandes?date=${dateStr}`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes?date=${dateStr}`);
       const data = await response.json();
 
       const commandesDuJour = data.filter(cmd => cmd.date?.startsWith(dateStr));
@@ -412,7 +412,10 @@ function formatDateLocale(date) {
 const handleDragEnd = async (event) => {
     const { active, over } = event;
 
-    if (!over || !active || active.id === over.id) return;
+   if (!over || !active || active.id === over.id || event.delta.x === 0 && event.delta.y === 0) {
+  // Pas de mouvement, probable faux drag
+  return;
+}
 
     // const [datePart, numPart, indexPizza] = active.id.split('-');
     // const draggedCmdId = `${datePart}-${numPart}`;
@@ -464,7 +467,7 @@ if (pizzasExistantes + pizzasDeplacees > pizzasParQuart + pizzaDeltaMax) {
       return newState;
     });
   try {
-  await fetch(`http://localhost:3001/api/commandes/${draggedCmdId}/creneau`, {
+  await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/${draggedCmdId}/creneau`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nouveauCreneau: over.id }),
@@ -493,7 +496,7 @@ console.log(now, ' ', dateGuadeloupe,'  ',formatDateLocale(dateGuadeloupe));
 
 
   //📒 Journalisation
-  await fetch('http://localhost:3001/api/logs/internes', {
+  await fetch(`${import.meta.env.VITE_API_BASE}/api/logs/internes`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -530,7 +533,7 @@ const handlePayerHiboutik = (pizza) => {
 useEffect(() => {
   if (!showModale || commandeAModifier) return; // 👈 ne génère pas de numéro si modification
 
-  fetch('http://localhost:3001/api/commandes/nouveau-numero')
+  fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/nouveau-numero`)
     .then(res => res.json())
     .then(data => setNumeroCommande(data.numeroCommande))
     .catch(err => console.error('Erreur récupération numéro commande', err));
