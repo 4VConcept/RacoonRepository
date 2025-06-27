@@ -173,7 +173,7 @@ let numeroCommandeFinal = commandeDataInitiale?.numeroCommande || numeroCommande
 // 🔒 Vérifie que le numéro de commande n'existe pas déjà (hors modification)
 if (!isModification) {
   try {
-    const verifResponse = await fetch(`${import.meta.env.VITE_API_BASE}api/commandes/verifier/${numeroCommandeFinal}`);
+    const verifResponse = await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/verifier/${numeroCommandeFinal}`);
     const verifData = await verifResponse.json();
 
     if (verifResponse.ok && verifData.existe) {
