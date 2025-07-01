@@ -268,10 +268,6 @@ const genererCouleurDepuisTexte = (texte) => {
   return couleursPastel[index];
 };
 
-
-
-
-/*ici*/
 const [prioriserHoraire, setPrioriserHoraire] = useState(false);
 
   // useEffect(() => {
@@ -738,8 +734,18 @@ listeCreneaux={creneaux.map(c => c.time)}
     onPayer={(mode) => mettreAJourPaiementLocal(commandeSelectionnee.numeroCommande, mode)}
  onModifier={(cmd) => {
     setCommandeSelectionnee(null); // Ferme la modale actuelle
-    setCommandeAModifier(cmd);     // Stocke la commande à modifier
-    setShowModale(true);           // Ouvre la modale de commande
+   const creneauTrouve = Object.keys(commandes).find(cren => 
+  commandes[cren].some(c => c.numeroCommande === cmd.numeroCommande)
+);
+
+if (creneauTrouve) {
+  setCommandeAModifier({ ...cmd, creneau: creneauTrouve });
+  setShowModale(true);
+} else {
+  setCommandeAModifier(cmd);
+  setShowModale(true);
+}
+         
   }}
   />
 )}

@@ -108,9 +108,15 @@ const supprimerCommande = async (commande) => {
     // Mise à jour locale de l’état
     setCommandes((prev) => {
       const nouveau = { ...prev };
-      if (nouveau[commande.creneau]) {
-        nouveau[commande.creneau] = nouveau[commande.creneau].filter(c => c.numeroCommande !== commande.numeroCommande);
-      }
+      for (const creneau in nouveau) {
+  if (nouveau[creneau].some(c => c.numeroCommande === commande.numeroCommande)) {
+    nouveau[creneau] = nouveau[creneau].filter(c => c.numeroCommande !== commande.numeroCommande);
+    if (nouveau[creneau].length === 0) {
+      delete nouveau[creneau]; // clean si vide
+    }
+    break; // stop dès trouvé
+  }
+}
       return nouveau;
     });
 

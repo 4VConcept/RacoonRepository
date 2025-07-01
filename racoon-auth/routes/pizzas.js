@@ -10,7 +10,13 @@ router.get('/all', (req, res) => {
 });
 
 router.get('/', (req, res) => {
-  db.all(`SELECT * FROM produits WHERE categorie_id IN (?, ?) ORDER BY nom`, [1, 2], (err, rows) => {
+  db.all(`SELECT * FROM produits WHERE categorie_id IN (?, ?) ORDER BY nom`, [1, 8], (err, rows) => {
+    if (err) return res.status(500).json({ success: false, message: 'Erreur base de données' });
+    res.json({ success: true, pizzas: rows });
+  });
+});
+router.get('/small', (req, res) => {
+  db.all(`SELECT * FROM produits WHERE categorie_id =1 ORDER BY nom`, (err, rows) => {
     if (err) return res.status(500).json({ success: false, message: 'Erreur base de données' });
     res.json({ success: true, pizzas: rows });
   });

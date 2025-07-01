@@ -35,22 +35,32 @@ const heureActuelle = new Date().toLocaleTimeString('fr-FR', {
 console.log("listeCreneaux =", listeCreneaux);
 console.log("commandes1 =", commandes);
 
+
+const creneauInitial = 
+    (estModification && data?.creneau) ||
+    (prioriserHoraire && selectedTime) ||
+    '';
+
+const [creneau, setCreneau] = useState(creneauInitial);
+
+const getCreneauValide = (creneauxDisponibles, data, prioriserHoraire, selectedTime) => {
+  if (data?.creneau && creneauxDisponibles.find(c => c.time === data.creneau)) {
+    console.log("✅ Utilisation du créneau de modification :", data.creneau);
+    return data.creneau;
+  }
+  if (prioriserHoraire && selectedTime && creneauxDisponibles.find(c => c.time === selectedTime)) {
+    console.log("✅ Utilisation du créneau priorisé :", selectedTime);
+    return selectedTime;
+  }
+  const defaut = creneauxDisponibles[0]?.time || '';
+  console.log("✅ Utilisation du créneau par défaut :", defaut);
+  return defaut;
+};
+
 useEffect(() => {
   console.log('🧪 PRIORISATION ACTIVÉE ?', prioriserHoraire);
   console.log('🧪 selectedTime reçu :', selectedTime);
-   let ancienCreneau2 = null;
 
-if (estModification) {
-    Object.entries(commandes || {}).forEach(([creneau, liste]) => {
-      liste.forEach((cmd) => {
-        ancienCreneau2 = creneau;
-          console.log("✅ Ancien créneau trouvé après trim :", creneau);
-        
-      });
-    });
-  } else {
-    console.log("ℹ️ Pas en mode modification, aucun ancien créneau à chercher.");
-  }
   const result = getCreneauxDisponibles(
     commandes,
     listeCreneaux,
@@ -59,59 +69,103 @@ if (estModification) {
     delta,
     heureActuelle,
     estModification,
-  ancienCreneau2
+    data?.creneau // <-- tu peux le passer si nécessaire selon la logique interne
   );
-console.log("creneauxdispo",result);
-  if (prioriserHoraire && selectedTime && result.find(c => c.time === selectedTime)) {
-    setCreneauxDisponibles(result);
-    setCreneau(selectedTime);
-    console.log('✅ Créneau priorisé sélectionné :', selectedTime);
-  } else {
-    setCreneauxDisponibles(result);
-    const defaultTime = result[0]?.time || '';
-    setCreneau(defaultTime);
-    console.log('🕒 Créneau par défaut sélectionné :', defaultTime);
-  }
-}, [commandes, listeCreneaux, pizzasCommandees.length, selectedTime, prioriserHoraire]);
+  console.log("✅ Créneaux disponibles calculés :", result);
 
+  setCreneauxDisponibles(result);
 
-const [creneauSelectionne, setCreneauSelectionne] = useState(creneauxDisponibles[0]?.time || '');
-
-useEffect(() => {
-  if (!creneauxDisponibles.length) return;
-
-  let ancienCreneau = null;
-
-  if (estModification) {
-    Object.entries(commandes || {}).forEach(([creneau, liste]) => {
-      liste.forEach((cmd) => {
-        ancienCreneau = creneau;
-          console.log("✅ Ancien créneau trouvé après trim :", creneau);
-        
-      });
-    });
-  } else {
-    console.log("ℹ️ Pas en mode modification, aucun ancien créneau à chercher.");
-  }
-
-  console.log("📍 ancienCreneau final :", ancienCreneau);
-  console.log("🕹 selectedTime =", selectedTime);
-
-  let creneauInitial = '';
-
-  if (estModification && ancienCreneau && creneauxDisponibles.find(c => c.time === ancienCreneau)) {
-    creneauInitial = ancienCreneau;
-    console.log("✅ Créneau modif sélectionné :", creneauInitial);
-  } else if (prioriserHoraire && selectedTime && creneauxDisponibles.find(c => c.time === selectedTime)) {
-    creneauInitial = selectedTime;
-    console.log("✅ Créneau priorisé sélectionné :", creneauInitial);
-  } else {
-    creneauInitial = creneauxDisponibles[0]?.time || '';
-    console.log("🕒 Créneau par défaut sélectionné :", creneauInitial);
-  }
-
+  const creneauInitial = getCreneauValide(result, data, prioriserHoraire, selectedTime);
   setCreneau(creneauInitial);
-}, [creneauxDisponibles, prioriserHoraire, selectedTime, numeroCommande, commandes, estModification]);
+}, [
+  commandes,
+  listeCreneaux,
+  pizzasCommandees.length,
+  selectedTime,
+  prioriserHoraire,
+  estModification,
+  data?.creneau
+]);
+
+
+// useEffect(() => {
+//   console.log('🧪 PRIORISATION ACTIVÉE ?', prioriserHoraire);
+//   console.log('🧪 selectedTime reçu :', selectedTime);
+//    let ancienCreneau2 = null;
+
+// if (estModification) {
+//     Object.entries(commandes || {}).forEach(([creneau, liste]) => {
+//       liste.forEach((cmd) => {
+//         ancienCreneau2 = creneau;
+//           console.log("✅ Ancien créneau trouvé après trim :", creneau);
+        
+//       });
+//     });
+//   } else {
+//     console.log("ℹ️ Pas en mode modification, aucun ancien créneau à chercher.");
+//   }
+//   const result = getCreneauxDisponibles(
+//     commandes,
+//     listeCreneaux,
+//     pizzasCommandees.length,
+//     pizzasParQuart,
+//     delta,
+//     heureActuelle,
+//     estModification,
+//   ancienCreneau2
+//   );
+// console.log("creneauxdispo",result);
+//   if (prioriserHoraire && selectedTime && result.find(c => c.time === selectedTime)) {
+//     setCreneauxDisponibles(result);
+//     setCreneau(selectedTime);
+//     console.log('✅ Créneau priorisé sélectionné :', selectedTime);
+//   } else {
+//     setCreneauxDisponibles(result);
+//     const defaultTime = result[0]?.time || '';
+//     setCreneau(defaultTime);
+//     console.log('🕒 Créneau par défaut sélectionné :', defaultTime);
+//   }
+// }, [commandes, listeCreneaux, pizzasCommandees.length, selectedTime, prioriserHoraire]);
+
+
+// const [creneauSelectionne, setCreneauSelectionne] = useState(creneauxDisponibles[0]?.time || '');
+
+// useEffect(() => {
+//   if (!creneauxDisponibles.length) return;
+
+//   let ancienCreneau = null;
+
+//   if (estModification) {
+//     Object.entries(commandes || {}).forEach(([creneau, liste]) => {
+//       liste.forEach((cmd) => {
+//         ancienCreneau = creneau;
+//           console.log("✅ Ancien créneau trouvé après trim :", creneau);
+        
+//       });
+//     });
+//   } else {
+//     console.log("ℹ️ Pas en mode modification, aucun ancien créneau à chercher.");
+//   }
+
+//   console.log("📍 ancienCreneau final :", ancienCreneau);
+//   console.log("🕹 selectedTime =", selectedTime);
+
+//   let creneauInitial = '';
+
+//   if (estModification && ancienCreneau && creneauxDisponibles.find(c => c.time === ancienCreneau)) {
+//     creneauInitial = ancienCreneau;
+//     console.log("✅ Créneau modif sélectionné :", creneauInitial);
+//   } else if (prioriserHoraire && selectedTime && creneauxDisponibles.find(c => c.time === selectedTime)) {
+//     creneauInitial = selectedTime;
+//     console.log("✅ Créneau priorisé sélectionné :", creneauInitial);
+//   } else {
+//     creneauInitial = creneauxDisponibles[0]?.time || '';
+//     console.log("🕒 Créneau par défaut sélectionné :", creneauInitial);
+//   }
+// console.log('ancien',ancienCreneau);
+// console.log('initial',creneauInitial);
+//   setCreneau(creneauInitial);
+// }, [creneauxDisponibles, prioriserHoraire, selectedTime, numeroCommande, commandes, estModification]);
 
 
 
@@ -131,7 +185,7 @@ const isBefore = (heure1, heure2) => {
 };
 const [nomClient, setNomClient] = useState(data.nomClient || '');
   const [telephone, setTelephone] = useState(data.telephone || '');
-const [creneau, setCreneau] = useState('');
+
   const [commentaire, setCommentaire] = useState(data.commentaire || '');
 
 
@@ -318,11 +372,18 @@ const totalFinal = appliqueRemise ? totalSansRemise * 0.95 : totalSansRemise;
     <p key={idx}><strong>Suppléments : </strong>{s.ingredient} ({s.portion})</p>
 ))}
 
-          {pizza.sousAliments?.length > 0 && (
-            <div>
-              <strong>Sans aliments :</strong> {pizza.sousAliments.map(s => `${s.ingredient} (${s.portion})`).join(', ')}
-            </div>
-          )}
+ {pizza.sousAliments
+  ?.filter(s => s.ingredient && s.ingredient.trim() !== '')
+  .length > 0 && (
+    <div>
+      <strong>Sans aliments :</strong>{' '}
+      {pizza.sousAliments
+        .filter(s => s.ingredient && s.ingredient.trim() !== '')
+        .map(s => `${s.ingredient} (${s.portion})`)
+        .join(', ')
+      }
+    </div>
+)}
         </td>
 
         <td className="px-4 py-2 text-right font-semibold">{pizza.prixTotal} €</td>
@@ -350,8 +411,9 @@ const totalFinal = appliqueRemise ? totalSansRemise * 0.95 : totalSansRemise;
   onChange={(e) => setCommentaire(e.target.value)}
   rows={3}
   placeholder="Ex : Ne pas couper la pizza, sans fromage, allergie aux fruits de mer..."
-  className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+  className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white text-black placeholder-gray-400"
 />
+
 
 </div>
 

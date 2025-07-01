@@ -38,8 +38,8 @@ console.log('🧾 Commentaire pour', cmdId, ':', pizza.commentaire);
       style={style}
    className="relative rounded p-2 mb-1 text-sm leading-snug shadow cursor-move text-black"
      >
- <div className="absolute top-1 right-1 flex items-center gap-1">
-  
+ <div className="absolute bottom-1 right-1 flex items-center gap-1">
+
   {afficherNomClient && (
     <button
       onDoubleClick={(e) => {
@@ -123,24 +123,29 @@ console.log('🧾 Commentaire pour', cmdId, ':', pizza.commentaire);
 
 
 
-  {pizza.sousAliments?.length > 0 && (
-  <div className="flex flex-wrap gap-1 items-center mt-1">
-    {pizza.sousAliments.map((s, i) => {
-      const portion = s.portion?.toLowerCase();
-      const estMoitie = portion === 'moitié';
+ {pizza.sousAliments
+  ?.filter(s => (s.ingredient && s.ingredient.trim() !== '') || (s.description && s.description.trim() !== ''))
+  .length > 0 && (
+    <div className="flex flex-wrap gap-1 items-center mt-1">
+      {pizza.sousAliments
+        .filter(s => (s.ingredient && s.ingredient.trim() !== '') || (s.description && s.description.trim() !== ''))
+        .map((s, i) => {
+          const portion = s.portion?.toLowerCase();
+          const estMoitie = portion === 'moitié';
 
-      return (
-        <span
-          key={i}
-          className="bg-red-100 text-red-800 text-sm font-medium px-2 py-0.5 rounded-full border border-red-200"
-        >
-          🚫 {(s.description || s.ingredient)?.toUpperCase()}
-          {estMoitie && ' (moitié)'}
-        </span>
-      );
-    })}
-  </div>
+          return (
+            <span
+              key={i}
+              className="bg-red-100 text-red-800 text-sm font-medium px-2 py-0.5 rounded-full border border-red-200"
+            >
+              🚫 {(s.description || s.ingredient)?.toUpperCase()}
+              {estMoitie && ' (moitié)'}
+            </span>
+          );
+        })}
+    </div>
 )}
+
 
 
  

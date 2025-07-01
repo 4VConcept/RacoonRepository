@@ -91,12 +91,16 @@ useEffect(() => {
 
 useEffect(() => {
   if (!nomPizza && pizzaId && pizzasDisponibles.length > 0) {
+   console.log('patrice2',nomPizza,'-',pizzaId);
     const chargerNomDepuisId = async () => {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/pizzas`);
+       
         const data = await res.json();
+         console.log('list pizza',data);
         if (data.success) {
           const pizzaTrouvee = data.pizzas.find(p => p.id == pizzaId);
+          console.log('patrice',pizzaTrouvee);
           if (pizzaTrouvee) {
             setNomPizza(pizzaTrouvee.nom);
           }
@@ -121,7 +125,9 @@ useEffect(() => {
   const filtres = produits.filter(p => p.categorie_id === idCategorieSupplements);
 
 
-  setSupplementsDisponibles(filtres);
+setSupplementsDisponibles(
+  [...filtres].sort((a, b) => a.nom.localeCompare(b.nom))
+);
 }, [taille, produits, categorieIds]);
 
 
@@ -252,7 +258,7 @@ useEffect(() => {
     setSelectedCreneau(data.creneauId || '');
     setTaille(data.taille || 'moyenne');
     setBase(data.base || 'Base tomate');
-    setOption(data.option || '');
+    setOption(data.option || []);
     setCuisson(data.cuisson || '');
     setSupplements(data.supplements || []);
     setSousAliments(data.sousAliments || []);
@@ -266,8 +272,8 @@ useEffect(() => {
     setSelectedCreneau(pizzaAModifier.creneauId || '');
     setTaille(pizzaAModifier.taille || 'moyenne');
     setBase(pizzaAModifier.base || 'Base tomate');
-    setOption(pizzaAModifier.option || '');
-    setCuisson(pizzaAModifier.cuisson || '');
+   setOption(pizzaAModifier.option || []);
+setCuisson(pizzaAModifier.cuisson || '');
     setSupplements(pizzaAModifier.supplements || []);
     setSousAliments(pizzaAModifier.sousAliments || []);
   }
@@ -283,16 +289,16 @@ useEffect(() => {
   const supplementsFiltrés = supplements.filter(s => s.ingredient && s.ingredient.trim() !== '');
   const sousAlimentsFiltrés = sousAliments.filter(s => s.ingredient && s.ingredient.trim() !== '');
 
-  // onUpdate({
-  //   pizzaId,
-  //   creneauId: selectedCreneau,
-  //   taille,
-  //   base,
-  //   option,
-  //   cuisson,
-  //   supplements: supplementsFiltrés,
-  //   sousAliments: sousAlimentsFiltrés,
-  // });
+  onUpdate({
+    pizzaId,
+    creneauId: selectedCreneau,
+    taille,
+    base,
+    option,
+    cuisson,
+    supplements: supplementsFiltrés,
+    sousAliments: sousAlimentsFiltrés,
+  });
 }, [pizzaId, selectedCreneau, taille, base, option, cuisson, supplements, sousAliments]);
   const tousLesCreneaux = [
     { id: 1, heure: '11:00', commandes: 4, max: 5, delta: 3 },

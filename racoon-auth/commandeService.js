@@ -1,11 +1,36 @@
 const db = require('./db.js');
 
+// Vérifie si le numéro existe déjà dans la table commandes
+async function numeroCommandeExiste(numeroCommande) {
+  const row = await db.getAsync(`SELECT 1 FROM commandes WHERE numeroCommande = ? LIMIT 1`, [numeroCommande]);
+  return !!row;
+}
+
+// Génère un nouveau numeroCommande localement si le numéro existe déjà
+async function genererNouveauNumeroCommande() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const today = `${yyyy}${mm}${dd}`;
+
+  let row = await db.getAsync(`SELECT * FROM compteurCommande WHERE date = ?`, [today]);
+
+  if (row) {
+    const nouveauCompteur = row.compteur + 1;
+    await db.runAsync(`UPDATE compteurCommande SET compteur = ? WHERE date = ?`, [nouveauCompteur, today]);
+    return `${today}-${nouveauCompteur}`;
+  } else {
+    await db.runAsync(`INSERT INTO compteurCommande (date, compteur) VALUES (?, ?)`, [today, 1]);
+    return `${today}-1`;
+  }
+}
 
 
 
 async function enregistrerCommande(commande) {
 
-const {
+let {
   id = '',
   numeroCommande = '',
   client = {},
@@ -30,6 +55,12 @@ console.log('📦 INSERT commande :', {
       appliqueRemise,
       commentaire
     });
+      // Vérification doublon et génération d'un nouveau numeroCommande si nécessaire
+  if (await numeroCommandeExiste(numeroCommande)) {
+    console.warn(`⚠️ numeroCommande ${numeroCommande} existe déjà, génération d'un nouveau numéro.`);
+    numeroCommande = await genererNouveauNumeroCommande();
+    console.log(`✅ Nouveau numeroCommande généré : ${numeroCommande}`);
+  }
 
 console.log('comm',commande);
  const stmt = `
@@ -37,6 +68,8 @@ console.log('comm',commande);
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `;
 
+//si noCommande existe déjà
+//il faut en prendre un nouveau
 
      // Exécution de l'insertion principale
   await new Promise((resolve, reject) => {
@@ -131,7 +164,7 @@ totalCommande += prixSupp;
   logInterne(action);
   console.log('✅ Journalisation envoyée');
 
-  return { id };
+  return { numeroCommande };
 }
 
 
@@ -185,5 +218,6 @@ module.exports = {
   enregistrerCommande,
   getCommandes,
   mettreAJourCreneauCommande,
-  logInterne
+  logInterne,
+  numeroCommandeExiste
 };

@@ -170,32 +170,6 @@ const appliqueRemise = dateCommande < dateLimiteRemise;
 // 🧠 Si on modifie une commande, on récupère son numéro ; sinon on garde le généré
 let numeroCommandeFinal = commandeDataInitiale?.numeroCommande || numeroCommande;
 
-// 🔒 Vérifie que le numéro de commande n'existe pas déjà (hors modification)
-if (!isModification) {
-  try {
-    const verifResponse = await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/verifier/${numeroCommandeFinal}`);
-    const verifData = await verifResponse.json();
-
-    if (verifResponse.ok && verifData.existe) {
-      console.warn("⚠️ Numéro déjà utilisé. Récupération d’un nouveau...");
-      // 🔁 On appelle un nouveau numéro unique
-      const nouveauNumeroResponse = await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/nouveau-numero`);
-      const nouveauNumeroData = await nouveauNumeroResponse.json();
-
-      if (!nouveauNumeroResponse.ok || !nouveauNumeroData.numero) {
-        throw new Error("Impossible d'obtenir un nouveau numéro.");
-      }
-
-      numeroCommandeFinal = nouveauNumeroData.numero;
-    }
-  } catch (err) {
-    console.error("❌ Erreur lors de la vérification ou récupération du numéro :", err);
-    toast.error("Erreur lors de la génération du numéro de commande.");
-    setIsSubmitting(false);
-    return;
-  }
-}
-
 // 🗑️ Supprime l'ancienne commande si on est en mode modification
 if (isModification) {
   try {
@@ -242,10 +216,33 @@ if (isModification) {
 };
 
 const pizzasNettoyees = await Promise.all(pizzasCommandees.map(enrichirPizza));
-console.log('🧪 contenu commandeData AVANT POST :', commandeData);
+
+/*v1.8*/
+// Vérifie si le numeroCommande existe déjà avant de créer commandeFinale
+let numeroCommandeAUtiliser = numeroCommandeFinal;
+
+try {
+    const resVerif = await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/verifier/${numeroCommandeFinal}`);
+    const dataVerif = await resVerif.json();
+
+    if (dataVerif.existe) {
+        console.warn(`⚠️ Le numeroCommande ${numeroCommandeFinal} existe déjà, génération d'un nouveau.`);
+        const resNew = await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/nouveau-numero`);
+        const dataNew = await resNew.json();
+        numeroCommandeAUtiliser = dataNew.numeroCommande;
+        console.log(`✅ Nouveau numeroCommande obtenu : ${numeroCommandeAUtiliser}`);
+    } else {
+        console.log(`✅ Le numeroCommande ${numeroCommandeFinal} est disponible.`);
+    }
+} catch (err) {
+    console.error('❌ Erreur lors de la vérification/génération du numeroCommande', err);
+    alert("Erreur lors de la génération du numéro de commande.");
+    setIsSubmitting(false);
+    return;
+}
 
 const commandeFinale = {
-  numeroCommande: numeroCommandeFinal,
+  numeroCommande: numeroCommandeAUtiliser,
   nomClient: commandeData.nomClient,
   telephone: commandeData.telephone,
   client: {
@@ -323,6 +320,30 @@ setIsSubmitting(false);
   }
 };
 const [resetPizzaForm, setResetPizzaForm] = useState(false);
+// const handleAddPizza = (nouvellePizza, resterSurEtape2 = false) => {
+//   const pizzaFinale = {
+//     ...nouvellePizza,
+//     nom: nouvellePizza.nom?.toUpperCase() ?? 'PIZZA',
+//     prixTotal: Number(nouvellePizza.prixTotal).toFixed(2)
+//   };
+
+//   if (indexPizzaAModifier !== null) {
+//     const copie = [...pizzasCommandees];
+//     copie[indexPizzaAModifier] = pizzaFinale;
+//     console.log("📝 Pizza modifiée :", pizzaFinale);
+//     setPizzasCommandees(copie);
+//     setIndexPizzaAModifier(null);
+//     setEtape(3);
+//   } else {
+//     console.log("🍕 Nouvelle pizza ajoutée :", pizzaFinale);
+//     setPizzasCommandees([...pizzasCommandees, pizzaFinale]);
+//     setCommandeData(prev => ({ ...prev, pizzaId: null }));
+//     setEtape(resterSurEtape2 ? 2 : 3);
+//   }
+
+//   setPizzaTemp({});
+// };
+
 const handleAddPizza = (nouvellePizza, resterSurEtape2 = false) => {
   const pizzaFinale = {
     ...nouvellePizza,
@@ -330,22 +351,29 @@ const handleAddPizza = (nouvellePizza, resterSurEtape2 = false) => {
     prixTotal: Number(nouvellePizza.prixTotal).toFixed(2)
   };
 
-  if (indexPizzaAModifier !== null) {
-    const copie = [...pizzasCommandees];
-    copie[indexPizzaAModifier] = pizzaFinale;
-    console.log("📝 Pizza modifiée :", pizzaFinale);
-    setPizzasCommandees(copie);
-    setIndexPizzaAModifier(null);
-    setEtape(3);
-  } else {
-    console.log("🍕 Nouvelle pizza ajoutée :", pizzaFinale);
-    setPizzasCommandees([...pizzasCommandees, pizzaFinale]);
-    setCommandeData(prev => ({ ...prev, pizzaId: null }));
-    setEtape(resterSurEtape2 ? 2 : 3);
-  }
+  setPizzasCommandees(prev => {
+    const copie = [...prev];
+    if (indexPizzaAModifier !== null) {
+      copie[indexPizzaAModifier] = pizzaFinale; // remplace la pizza modifiée
+      console.log("📝 Pizza modifiée :", pizzaFinale);
+    } else {
+      copie.push(pizzaFinale); // ajoute une nouvelle pizza
+      console.log("🍕 Nouvelle pizza ajoutée :", pizzaFinale);
+    }
+    return copie;
+  });
 
+  setIndexPizzaAModifier(null); // reset mode édition après ajout/modification
+  setCommandeData(prev => ({ ...prev, pizzaId: null }));
+  setEtape(resterSurEtape2 ? 2 : 3);
   setPizzaTemp({});
 };
+
+
+
+
+
+
 
 // const handleAddPizza = (nouvellePizza, resterSurEtape2 = false) => {
 

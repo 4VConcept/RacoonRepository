@@ -22,12 +22,12 @@ router.get('/verifier/:numeroCommande', async (req, res) => {
   const { numeroCommande } = req.params;
 
   try {
-    const [rows] = await db.query(
+    const row = await db.getAsync(
       'SELECT 1 FROM commandes WHERE numeroCommande = ? LIMIT 1',
       [numeroCommande]
     );
 
-    if (rows.length > 0) {
+    if (row) {
       return res.json({ existe: true });
     } else {
       return res.json({ existe: false });
@@ -37,6 +37,7 @@ router.get('/verifier/:numeroCommande', async (req, res) => {
     res.status(500).json({ message: "Erreur serveur" });
   }
 });
+
 
 
 router.get('/', async (req, res) => {

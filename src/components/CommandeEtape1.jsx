@@ -42,9 +42,8 @@ function getCouleurPizza(nom) {
   useEffect(() => {
     const fetchPizzas = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/pizzas`);
+        const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/pizzas/small`);
         const data = await res.json();
-console.log("✅ Pizzas récupérées :", data.pizzas);
 
         if (data.success && Array.isArray(data.pizzas)) {
 
