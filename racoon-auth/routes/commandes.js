@@ -268,7 +268,8 @@ const sale_id = creationVente.data.sale_id;
         product_id: parseInt(ligne.idProduit),
         size_id: 1,
         quantity:1,
-        product_price: ligne.price
+        product_price: ligne.price,
+        stock_withdrawal:'1'
       }, { headers: { 'Content-Type': 'application/json', ...authHeader } });
  }
 

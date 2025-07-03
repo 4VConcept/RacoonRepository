@@ -244,7 +244,7 @@ console.log('🎯 modePaiement =', commande.modePaiement);
     setIsUpdating(true);
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/commandes/versHiboutik`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/commandes/versHiboutik`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ numeroCommande: commande.numeroCommande })
